@@ -243,13 +243,17 @@ class ProjectManager:
         self.projects[project.name] = project
         
         # Set as current if it's the first project
+        # IMPORTANT: Use the object from the dictionary to ensure consistency
         if self.current_project is None:
-            self.current_project = project
+            self.current_project = self.projects[project.name]
+            print(f"✅ Set '{project.name}' as current project (id: {id(self.current_project)})")
     
     def select_project(self, project_name: str) -> bool:
         """Select a project as current"""
         if project_name in self.projects:
+            # Always use the actual project object from the dictionary
             self.current_project = self.projects[project_name]
+            print(f"✅ Selected project '{project_name}' (id: {id(self.current_project)})")
             return True
         return False
     
@@ -336,12 +340,33 @@ class ProjectManager:
         # Set source workbook path
         self.source_workbook_path = workbook_path
         
-        # Load saved project data from backup or settings file to restore mappings (needed for all branches)
+        # Load saved project data - ALWAYS prioritize project_settings.json over backup
         saved_project_data = {}
         
-        # First try to use backup settings if available (from reset_all_projects)
-        if hasattr(self, '_backup_settings') and self._backup_settings:
-            print(f"🔍 Loading saved project data from backup (after Start Fresh)")
+        # Check if we should force backup load (only when user explicitly chooses "Load from Backup")
+        force_backup = getattr(self, '_force_backup_load', False)
+        
+        # FIRST: Always try to load from project_settings.json (unless forcing backup)
+        if os.path.exists(self.settings_file) and not force_backup:
+            print(f"📂 Loading saved project data from {self.settings_file}")
+            try:
+                with open(self.settings_file, 'r', encoding='utf-8') as f:
+                    saved_settings = json.load(f)
+                saved_projects = saved_settings.get('projects', {})
+                print(f"📋 Found {len(saved_projects)} saved projects in settings file")
+                for proj_name, proj_data in saved_projects.items():
+                    mappings_count = len(proj_data.get('mappings', {}))
+                    print(f"   - {proj_name}: {mappings_count} mappings")
+                    if proj_data.get('mappings'):  # Only include projects with mappings
+                        saved_project_data[proj_name] = proj_data
+                        print(f"✅ Loaded mappings for {proj_name}: {mappings_count} mappings")
+                print(f"💾 Total projects loaded from settings: {len(saved_project_data)}")
+            except Exception as e:
+                print(f"⚠️ Error loading saved project data: {e}")
+                saved_project_data = {}
+        # SECOND: Only use backup if explicitly requested or no settings file exists
+        elif hasattr(self, '_backup_settings') and self._backup_settings:
+            print(f"🔄 Loading from backup (forced={force_backup} or no settings file)")
             saved_settings = self._backup_settings
             saved_projects = saved_settings.get('projects', {})
             print(f"📋 Found {len(saved_projects)} saved projects in backup")
@@ -350,31 +375,13 @@ class ProjectManager:
                 print(f"   - {proj_name}: {mappings_count} mappings")
                 if proj_data.get('mappings'):  # Only include projects with mappings
                     saved_project_data[proj_name] = proj_data
-                    print(f"📁 ✅ Available saved mappings for {proj_name}: {mappings_count} mappings")
-            print(f"💾 Total projects with mappings available: {len(saved_project_data)}")
+                    print(f"📁 Loaded backup mappings for {proj_name}: {mappings_count} mappings")
+            print(f"💾 Total projects loaded from backup: {len(saved_project_data)}")
             # Clear backup after use
             self._backup_settings = None
+            self._force_backup_load = False  # Reset flag
         else:
-            # Fallback to reading from settings file
-            print(f"🔍 Loading saved project data from {self.settings_file}")
-            if os.path.exists(self.settings_file):
-                try:
-                    with open(self.settings_file, 'r', encoding='utf-8') as f:
-                        saved_settings = json.load(f)
-                    saved_projects = saved_settings.get('projects', {})
-                    print(f"📋 Found {len(saved_projects)} saved projects in settings file")
-                    for proj_name, proj_data in saved_projects.items():
-                        mappings_count = len(proj_data.get('mappings', {}))
-                        print(f"   - {proj_name}: {mappings_count} mappings")
-                        if proj_data.get('mappings'):  # Only include projects with mappings
-                            saved_project_data[proj_name] = proj_data
-                            print(f"📁 ✅ Available saved mappings for {proj_name}: {mappings_count} mappings")
-                    print(f"💾 Total projects with mappings available: {len(saved_project_data)}")
-                except Exception as e:
-                    print(f"❌ Error loading saved project data: {e}")
-                    saved_project_data = {}
-            else:
-                print(f"❌ Settings file {self.settings_file} does not exist")
+            print(f"ℹ️ No saved data available (settings file: {os.path.exists(self.settings_file)})")
         
         # Check if we should update existing projects or create new ones
         existing_projects = list(self.projects.keys())
@@ -514,11 +521,26 @@ class ProjectManager:
         for project_name, project in self.projects.items():
             # Clear runtime data before saving
             project.clear_runtime_data()
-            settings_data['projects'][project_name] = project.to_dict()
+            project_dict = project.to_dict()
+            settings_data['projects'][project_name] = project_dict
+            # Only show save info for Columbia Villas when debugging
+            # if project_name == "Columbia Villas":
+            #     print(f"  💾 Saving Columbia Villas with {len(project.mappings)} mappings")
         
         try:
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings_data, f, indent=2, ensure_ascii=False)
+            
+            # Verification disabled - uncomment for debugging
+            # if "Columbia Villas" in settings_data['projects']:
+            #     with open(self.settings_file, 'r', encoding='utf-8') as f:
+            #         verify_data = json.load(f)
+            #     file_mappings = len(verify_data['projects']['Columbia Villas'].get('mappings', {}))
+            #     memory_mappings = len(settings_data['projects']['Columbia Villas'].get('mappings', {}))
+            #     if file_mappings != memory_mappings:
+            #         print(f"     ❌ ERROR: File has {file_mappings} but tried to write {memory_mappings}!")
+            #     else:
+            #         print(f"     ✅ Verified: {file_mappings} mappings successfully written to file")
         except Exception as e:
             print(f"Error saving settings: {e}")
     
@@ -541,13 +563,16 @@ class ProjectManager:
                 project = Project.from_dict(project_data)
                 self.projects[project_name] = project
             
-            # Set current project
+            # Set current project - ALWAYS use object from dictionary
             current_project_name = settings_data.get('current_project')
             if current_project_name and current_project_name in self.projects:
                 self.current_project = self.projects[current_project_name]
+                print(f"✅ Loaded current project '{current_project_name}' (id: {id(self.current_project)})")
             elif self.projects:
                 # Default to first project if current not found
-                self.current_project = list(self.projects.values())[0]
+                first_project_name = list(self.projects.keys())[0]
+                self.current_project = self.projects[first_project_name]
+                print(f"✅ Set default current project '{first_project_name}' (id: {id(self.current_project)})")
         
         except Exception as e:
             print(f"Error loading settings: {e}")
