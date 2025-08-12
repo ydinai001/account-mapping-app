@@ -1821,15 +1821,31 @@ class MultiProjectAccountMappingApp:
         has_amounts = data and isinstance(data[0], tuple)
         
         # Set dialog size
-        dialog.geometry("1000x700")
+        dialog_width = 1000
+        dialog_height = 700
         dialog.transient(self.root)
         dialog.grab_set()
         
-        # Center the dialog
+        # Center the dialog relative to parent window
         dialog.update_idletasks()
-        x = (dialog.winfo_screenwidth() // 2) - (1000 // 2)
-        y = (dialog.winfo_screenheight() // 2) - (700 // 2)
-        dialog.geometry(f"+{x}+{y}")
+        self.root.update_idletasks()  # Ensure parent window dimensions are current
+        
+        # Get parent window position and size
+        parent_x = self.root.winfo_x()
+        parent_y = self.root.winfo_y()
+        parent_width = self.root.winfo_width()
+        parent_height = self.root.winfo_height()
+        
+        # Calculate center position relative to parent
+        x = parent_x + (parent_width - dialog_width) // 2
+        y = parent_y + (parent_height - dialog_height) // 2
+        
+        # Ensure dialog stays on screen (with some margin)
+        x = max(50, x)  # Keep at least 50 pixels from left edge
+        y = max(50, y)  # Keep at least 50 pixels from top edge
+        
+        # Set the final geometry
+        dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
         
         # Header
         header_frame = ttk.Frame(dialog, padding="10")
@@ -4678,15 +4694,18 @@ class MultiProjectAccountMappingApp:
                 # Preserve checkbox state from current selection
                 checkbox_state = "☑" if current_checkboxes.get(source_account, False) else "☐"
                 
-                # Format confidence display
-                confidence_display = f"{confidence} ({similarity}%)"
+                # Format confidence display - handle unmapped accounts
+                if confidence == "None" or not rolling_account:
+                    confidence_display = "Not Mapped"
+                else:
+                    confidence_display = f"{confidence} ({similarity}%)"
                 tag = "normal"
                 
                 item = self.popup_tree.insert("", "end", values=(
                     checkbox_state,  # Preserve checkbox state
                     source_account,
                     formatted_amount,  # Show source amount
-                    rolling_account,
+                    rolling_account if rolling_account else "",  # Empty string for unmapped
                     confidence_display
                 ), tags=(tag,))
         
@@ -5311,7 +5330,11 @@ class MultiProjectAccountMappingApp:
                     messagebox.showerror("Error", "No account data found in specified ranges.")
                 return
             
-            mappings = self.create_intelligent_mappings(source_data, rolling_data)
+            # Check for existing mappings to preserve user edits and apply to new accounts
+            existing_mappings = current_project.mappings if hasattr(current_project, 'mappings') else {}
+            
+            # Create mappings for ALL source accounts (including new ones without matches)
+            mappings = self.create_intelligent_mappings(source_data, rolling_data, existing_mappings)
             
             # Store mappings in current project
             current_project.mappings = mappings
@@ -5383,44 +5406,55 @@ class MultiProjectAccountMappingApp:
             pass
             return []
     
-    def create_intelligent_mappings(self, source_accounts, rolling_accounts):
-        """Create intelligent mappings with confidence levels based on similarity"""
+    def create_intelligent_mappings(self, source_accounts, rolling_accounts, existing_mappings=None):
+        """Create intelligent mappings with confidence levels based on similarity
+        Now includes ALL source accounts, even those without matches"""
         import difflib
         from collections import OrderedDict
         
         mappings = OrderedDict()
         
         for source_account in source_accounts:
-            best_match = None
-            best_ratio = 0.0
-            confidence = "Low"
-            
-            # Find best match using fuzzy string matching
-            for rolling_account in rolling_accounts:
-                # Calculate similarity ratio
-                ratio = difflib.SequenceMatcher(None, 
-                    source_account.lower().strip(), 
-                    rolling_account.lower().strip()).ratio()
-                
-                if ratio > best_ratio:
-                    best_ratio = ratio
-                    best_match = rolling_account
-            
-            # Determine confidence level based on similarity
-            if best_ratio >= 0.8:
-                confidence = "High"
-            elif best_ratio >= 0.6:
-                confidence = "Medium"
+            # Check if we have an existing mapping for this account
+            if existing_mappings and source_account in existing_mappings:
+                # Preserve existing mapping (user may have edited it)
+                mappings[source_account] = existing_mappings[source_account]
             else:
+                # Create new mapping (either find match or leave empty)
+                best_match = None
+                best_ratio = 0.0
                 confidence = "Low"
-            
-            # Store mapping
-            mappings[source_account] = {
-                'rolling_account': best_match if best_match else "",
-                'confidence': confidence,
-                'similarity': round(best_ratio * 100, 1),
-                'user_edited': False
-            }
+                
+                # Find best match using fuzzy string matching
+                for rolling_account in rolling_accounts:
+                    # Calculate similarity ratio
+                    ratio = difflib.SequenceMatcher(None, 
+                        source_account.lower().strip(), 
+                        rolling_account.lower().strip()).ratio()
+                    
+                    if ratio > best_ratio:
+                        best_ratio = ratio
+                        best_match = rolling_account
+                
+                # Determine confidence level based on similarity
+                if best_ratio >= 0.8:
+                    confidence = "High"
+                elif best_ratio >= 0.6:
+                    confidence = "Medium"
+                elif best_ratio >= 0.4:  # Lower threshold for Low confidence
+                    confidence = "Low"
+                else:
+                    # No good match found - create empty mapping for user to fill
+                    confidence = "None"
+                    best_match = ""  # Empty string for unmapped accounts
+                
+                # Store new mapping
+                mappings[source_account] = {
+                    'rolling_account': best_match if best_match else "",
+                    'confidence': confidence,
+                    'similarity': round(best_ratio * 100, 1),
+                    'user_edited': False
+                }
         
         return mappings
     
@@ -5510,15 +5544,18 @@ class MultiProjectAccountMappingApp:
                 # Don't add to checkbox states for headings
             else:
                 # For normal accounts: checkbox, normal text, show amount, mapped account, confidence
-                # Format confidence display
-                confidence_display = f"{confidence} ({similarity}%)"
+                # Format confidence display - handle unmapped accounts
+                if confidence == "None" or not rolling_account:
+                    confidence_display = "Not Mapped"
+                else:
+                    confidence_display = f"{confidence} ({similarity}%)"
                 tag = "normal"
                 
                 item = self.mapping_tree.insert("", "end", values=(
                     "☐",  # Unchecked checkbox
                     source_account,
                     formatted_amount,  # Show source amount
-                    rolling_account,
+                    rolling_account if rolling_account else "",  # Empty string for unmapped
                     confidence_display
                 ), tags=(tag,))
                 
