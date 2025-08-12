@@ -1,137 +1,204 @@
 # Account Mapping Tool v2 - Multi-Project Edition
 
-A professional desktop application for mapping account descriptions between multiple P&L projects in Excel workbooks with intelligent pattern recognition, manual editing capabilities, and monthly statement generation.
+A professional Python Tkinter desktop application for mapping account descriptions between multiple P&L projects in Excel workbooks with intelligent pattern recognition, manual editing capabilities, and automated monthly statement generation.
 
-## 🆕 **What's New in Version 2**
+## 📋 Table of Contents
+- [Overview](#overview)
+- [Core Features](#core-features)
+- [Application Architecture](#application-architecture)
+- [Workflow & Logic](#workflow--logic)
+- [Data Management](#data-management)
+- [Installation & Setup](#installation--setup)
+- [User Guide](#user-guide)
+- [Technical Details](#technical-details)
+- [Troubleshooting](#troubleshooting)
+- [Version History](#version-history)
 
-### **Multi-Project Support**
-- **Excel Workbooks**: Upload workbooks containing multiple project sheets
-- **Project Isolation**: Each project maintains separate settings and data
-- **Project Switching**: Easy navigation between projects via dropdown menu
-- **Automatic Detection**: Scans workbooks and extracts project names from cell A1
+## Overview
 
-### **Enhanced User Interface**
-- **Project Header**: Shows current project name in window title and header
-- **Context-Aware UI**: Interface adapts based on selected project
-- **Smart Workflow**: Steps activate progressively as requirements are met
-- **Project Menu**: Top-right dropdown for quick project switching
+The Account Mapping Tool v2 is a sophisticated desktop application designed for financial professionals working with multi-property real estate P&L statements. It automates the complex process of mapping account descriptions between source P&L files and rolling P&L templates, handling multiple projects simultaneously with intelligent account matching and manual override capabilities.
 
-### **Advanced File Handling**
-- **Encrypted Files**: Supports password-protected Excel workbooks
-- **Sheet Mapping**: Link projects to specific worksheets in rolling P&L
-- **Persistent Settings**: Project-specific configurations saved automatically
-- **Multiple Formats**: Supports both .xlsx and .xls files
+### Key Business Problem Solved
+- **Manual Mapping Elimination**: Automates the tedious process of matching hundreds of account descriptions
+- **Multi-Project Management**: Handles multiple properties/projects in a single workflow
+- **Data Integrity**: Preserves Excel formulas and prevents data loss
+- **Time Savings**: Reduces hours of manual work to minutes
 
-## 🎯 **Multi-Project Workflow**
+## Core Features
 
-### **Step 1: Project Discovery & Setup**
-1. **Upload Source P&L Workbook**
-   - Click "Browse..." to select your multi-project Source P&L workbook
-   - Click "Scan Projects" to automatically detect all projects
-   - System reads project names from cell A1 of each sheet
+### 🏢 Multi-Project Support
+- **Automatic Project Detection**: Scans Excel workbooks and extracts project names from cell A1
+- **Project Isolation**: Each project maintains separate settings, mappings, and data
+- **Quick Switching**: Dropdown menu for instant project navigation
+- **Bulk Operations**: Export all projects or process individually
 
-2. **Project Selection**
-   - Select a project from the dropdown menu in the top-right
-   - Only selected project data is shown in the interface
-   - All other steps become available after project selection
+### 🤖 Intelligent Mapping Engine
+- **Fuzzy String Matching**: Uses advanced algorithms to match similar account descriptions
+- **Confidence Scoring**: High/Medium/Low confidence ratings based on similarity
+- **Pattern Recognition**: Detects account numbers, categories, and common variations
+- **Learning Capability**: Preserves manual edits and applies them consistently
 
-3. **Rolling P&L Configuration**
-   - Upload Rolling P&L workbook (after project selection)
-   - Select the appropriate sheet for the current project
-   - Each project can map to different sheets in the rolling workbook
+### 📊 Excel Integration
+- **Formula Preservation**: Maintains Excel formulas when updating cells
+- **Multi-Sheet Support**: Handles complex workbooks with multiple sheets
+- **Password Protection**: Supports encrypted Excel files
+- **Format Flexibility**: Works with .xlsx and .xls formats
 
-### **Step 2: Project-Specific Mapping**
-- **Range Configuration**: Set account description ranges per project
-- **Mapping Generation**: Create intelligent mappings for selected project only
-- **Data Isolation**: Each project maintains separate mappings and settings
+### 💾 Data Persistence
+- **Automatic Saving**: All changes saved immediately
+- **Project Settings**: JSON-based configuration storage
+- **Backup System**: Automatic timestamped backups with retention policy
+- **Session Recovery**: Restores last state on restart
 
-### **Step 3: Save & Manage**
-- **Project-Specific Storage**: Mappings saved separately for each project
-- **Reset Option**: Clear mappings for current project only
-- **Project Switching**: Switch between projects without losing data
+### 🎨 Advanced UI Features
+- **Pop-out Windows**: Detachable mapping and preview windows
+- **Zoom Controls**: Adjustable interface scaling (Cmd+/- or Ctrl+/-)
+- **Real-time Filtering**: Search and filter mappings instantly
+- **Bulk Editing**: Select multiple accounts for batch operations
+- **Progress Indicators**: Visual feedback for long operations
 
-### **Step 4: Monthly Statement Generation**
-- **Project Context**: Generate statements for currently selected project
-- **Target Workbook**: Write data back to the original rolling P&L file
-- **Conflict Resolution**: Handle existing data with user-friendly dialogs
+## Application Architecture
 
-## 📁 **File Structure & Organization**
-
-### **Project Directory Structure**
+### File Structure
 ```
 account-mapping-app/
-├── main_v2.py              # Main application (5800+ lines)
-├── run_app_v2.py           # Application launcher with error handling
-├── project_manager.py      # Project management utilities
-├── test_performance.py     # Performance testing utilities
-├── requirements.txt        # Python dependencies
-├── README_v2.md           # This documentation
-├── CLAUDE_CODE_HISTORY.md # Development history
-├── project_settings.json   # Multi-project configuration
-├── range_settings.json     # Excel range configurations
-├── range_memory.json       # Range memory persistence
-├── sample_source_pl.xlsx   # Sample source P&L file
-├── sample_rolling_pl.xlsx  # Sample rolling P&L file
-└── backups/               # Automatic project backups (8 snapshots retained)
+├── Core Application Files
+│   ├── main_v2.py              # Main application (5800+ lines)
+│   ├── run_app_v2.py           # Application launcher with error handling
+│   └── project_manager.py      # Project management and persistence
+│
+├── Configuration Files
+│   ├── project_settings.json   # Multi-project configurations & mappings
+│   ├── range_settings.json     # Default Excel range specifications
+│   └── range_memory.json       # Per-project range persistence
+│
+├── Documentation
+│   ├── README_v2.md            # This comprehensive documentation
+│   ├── CLAUDE.md               # AI assistant guidance
+│   └── CLAUDE_CODE_HISTORY.md  # Development session history
+│
+├── Testing & Samples
+│   ├── test_performance.py     # Performance profiling utilities
+│   ├── sample_source_pl.xlsx   # Sample multi-project source file
+│   └── sample_rolling_pl.xlsx  # Sample rolling P&L template
+│
+├── Dependencies
+│   ├── requirements.txt        # Python package dependencies
+│   └── .gitignore             # Git ignore rules
+│
+└── Generated Directories
+    ├── backups/                # Automatic project backups
+    └── restored_files/         # Files recovered from backups
 ```
 
-### **Source P&L Workbook Format**
-```
-Source P&L.xlsx
-├── Sheet 1 (e.g., "COVI")
-│   ├── A1: "Columbia Villas"     ← Project name
-│   ├── A8:F200: Account data     ← Configurable range
-│   └── Column I: Amount data
-├── Sheet 2 (e.g., "DYVI")
-│   ├── A1: "Dyersdale Village"   ← Project name
-│   └── ... (similar structure)
-└── ... (additional project sheets)
-```
+### Component Architecture
 
-### **Rolling P&L Workbook Format**
-```
-Rolling P&L.xlsx
-├── "Columbia" sheet              ← Maps to Columbia Villas project
-├── "Dyersdale" sheet            ← Maps to Dyersdale Village project
-├── "Pine Terrace" sheet         ← Maps to Pine Terrace project
-├── "Summerglen" sheet           ← Maps to Summer Glen project
-├── "WCL" sheet                  ← Maps to West Campus Lofts project
-└── ... (other sheets)
-```
+#### 1. **Main Application (`main_v2.py`)**
+- **Class**: `MultiProjectAccountMappingApp`
+- **Lines**: 5800+ lines of production code
+- **Responsibilities**:
+  - GUI management and event handling
+  - Workflow orchestration (4-step process)
+  - Excel file processing
+  - Mapping generation and management
+  - UI state management
 
-## 🚀 **Getting Started**
+#### 2. **Project Manager (`project_manager.py`)**
+- **Classes**: `Project`, `ProjectManager`
+- **Responsibilities**:
+  - Project data encapsulation
+  - Settings persistence (JSON)
+  - Project switching logic
+  - Backup and restore functionality
 
-### **Installation**
-```bash
-# 1. Navigate to project directory
-cd account-mapping-app
+#### 3. **Launcher (`run_app_v2.py`)**
+- **Purpose**: Safe application startup
+- **Features**:
+  - Dependency checking
+  - Error handling
+  - Graceful failure recovery
 
-# 2. Set up virtual environment (recommended)
-python3 -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-# or .venv\Scripts\activate  # Windows
+## Workflow & Logic
 
-# 3. Install dependencies
-pip install -r requirements.txt
+### 4-Step Workflow Process
 
-# 4. Run the multi-project application
-python3 run_app_v2.py
-```
+#### Step 1: Upload Source and Rolling P&L Files
+1. **Source P&L Upload**:
+   - User selects multi-project Excel workbook
+   - System scans all sheets
+   - Extracts project names from cell A1 of each sheet
+   - Creates project list automatically
 
-### **Sample Data Testing**
-Use the provided sample files to test multi-project functionality:
-- **Source P&L.xlsx**: Contains 5 projects (Columbia Villas, Dyersdale Village, Pine Terrace, Summer Glen, West Campus Lofts)
-- **Rolling P&L.xlsx**: Contains corresponding project sheets
+2. **Project Selection**:
+   - User selects active project from dropdown
+   - UI updates to show project-specific data
+   - Previous project data is preserved
 
-## 🔧 **Project Management Features**
+3. **Rolling P&L Configuration**:
+   - User uploads rolling P&L template
+   - Selects appropriate sheet for current project
+   - System validates sheet existence
 
-### **Automatic Project Detection**
-- Scans all sheets in source workbook
-- Extracts project names from cell A1
-- Creates project list automatically
-- Handles various Excel formats and encryption
+#### Step 2: Map Account Descriptions
+1. **Range Configuration**:
+   - User specifies source account range (e.g., A8:F200)
+   - User specifies rolling account range (e.g., A1:A100)
+   - Live preview shows extracted data
 
-### **Project-Specific Data Storage**
+2. **Automatic Mapping Generation**:
+   - System extracts accounts from both ranges
+   - Applies fuzzy matching algorithm
+   - Generates confidence scores
+   - Creates initial mappings
+
+3. **Manual Editing**:
+   - Double-click to edit individual mappings
+   - Bulk edit for multiple selections
+   - Search and filter capabilities
+   - All edits preserved immediately
+
+#### Step 3: Review Mapped Accounts & Generate Statement
+1. **Preview Generation**:
+   - System aggregates amounts by mapped categories
+   - Shows 3-column preview (Account, Previous Month, Current Month)
+   - Detects target month automatically
+
+2. **Data Validation**:
+   - Verifies all mappings are complete
+   - Checks for missing amounts
+   - Validates target cells in rolling P&L
+
+3. **Statement Generation**:
+   - Writes aggregated data to rolling P&L
+   - Preserves existing formulas
+   - Handles conflicts gracefully
+
+#### Step 4: Save Final Rolling P&L with Actual Data
+1. **Export Options**:
+   - Export current project
+   - Export all projects with data
+   - Custom filename with timestamp
+
+2. **Finalization**:
+   - Updates all formulas
+   - Saves to specified location
+   - Creates backup automatically
+
+### Automatic Workflow Detection
+The application intelligently detects when all requirements are met and can automatically:
+- Generate mappings when ranges are specified
+- Create monthly statements when mappings exist
+- Skip redundant steps when data is already processed
+
+### New Account Detection
+- **On Startup**: Checks for new accounts not in existing mappings
+- **Automatic Addition**: Adds new accounts with intelligent matching
+- **Order Preservation**: Maintains source file account order
+- **Manual Override Protection**: Never overwrites user edits
+
+## Data Management
+
+### Project Settings Structure
 ```json
 {
   "source_workbook_path": "/path/to/source.xlsx",
@@ -139,272 +206,246 @@ Use the provided sample files to test multi-project functionality:
   "current_project": "Columbia Villas",
   "projects": {
     "Columbia Villas": {
+      "name": "Columbia Villas",
       "source_sheet": "COVI",
       "rolling_sheet": "Columbia",
       "source_range": "A8:F200",
       "rolling_range": "A1:A100",
-      "mappings": { ... }
-    },
-    "Dyersdale Village": {
-      "source_sheet": "DYVI",
-      "rolling_sheet": "Dyersdale",
-      ...
+      "source_file_path": "/path/to/source.xlsx",
+      "mapping_file_path": "/path/to/mapping.json",
+      "mappings": {
+        "8000 Rental Income": {
+          "rolling_account": "Rental Revenue",
+          "confidence": "High",
+          "similarity": 85.5,
+          "user_edited": false
+        },
+        "8540 Other Exterior Replacement": {
+          "rolling_account": "Other Income",
+          "confidence": "Manual",
+          "similarity": 100.0,
+          "user_edited": true
+        }
+      },
+      "monthly_data": {},
+      "aggregated_data": {},
+      "target_month": "Jun-25",
+      "step4_completed": false,
+      "workflow_state": {
+        "step1_complete": true,
+        "step2_complete": true,
+        "step3_complete": false,
+        "step4_complete": false
+      },
+      "ui_state": {
+        "filter_value": "",
+        "sort_value": "",
+        "zoom_level": 1.0,
+        "checkbox_states": {}
+      }
     }
   }
 }
 ```
 
-### **Smart UI State Management**
-- **Context Switching**: Interface updates when projects are switched
-- **Progressive Activation**: Steps unlock as requirements are met
-- **Data Isolation**: No cross-contamination between projects
-- **Session Recovery**: Restores last selected project on restart
+### Mapping Priority System
+1. **User Manual Edits** (Highest Priority)
+   - Always preserved across sessions
+   - Never overwritten by automatic generation
+   - Marked with "Manual" confidence
 
-## 📊 **Advanced Features**
+2. **Project Settings File** (`project_settings.json`)
+   - Primary source of truth
+   - Loaded on startup
+   - Updated after every change
 
-### **Conflict Resolution**
-When writing data to rolling P&L, if existing data is found:
-- **Show Current Data**: Display what's already in the cell
-- **Show New Data**: Display what will be written
-- **User Choice**: Keep old, overwrite, or add both values
-- **Excel Preservation**: Maintain formulas and formatting
+3. **External Mapping Files** (Lowest Priority)
+   - Only loaded if no mappings exist
+   - Used for initial import
+   - Not loaded if project has existing mappings
 
-### **Enhanced Error Handling**
-- **File Validation**: Check workbook accessibility and format
-- **Sheet Verification**: Ensure required sheets exist
-- **Data Validation**: Verify range specifications and data integrity
-- **Graceful Recovery**: Handle errors without data loss
+### Cache Management
+The application uses multiple caching layers for performance:
+- **DataFrame Cache**: Loaded Excel files
+- **Fuzzy Match Cache**: String similarity results
+- **Source Amounts Cache**: Extracted monthly amounts
+- **Rolling Accounts Cache**: Available target accounts
 
-### **Performance Optimization**
-- **Lazy Loading**: Load project data only when selected
-- **Efficient Storage**: Minimal memory footprint per project
-- **Fast Switching**: Quick transitions between projects
-- **Background Processing**: Non-blocking operations where possible
+## Installation & Setup
 
-### **Backup & Recovery System**
-- **Automatic Backups**: Creates timestamped backups during critical operations
-- **Backup Contents**: Preserves project settings, mappings, and Excel files
-- **Retention Policy**: Maintains recent backups for easy recovery
-- **Restore Functionality**: Built-in project restoration from backups
-- **Backup Naming**: Clear timestamps and month indicators (e.g., Jun_2025_Actual)
+### System Requirements
+- **Python**: 3.13 or higher
+- **Operating System**: Windows, macOS, or Linux
+- **Memory**: 4GB RAM minimum (8GB recommended)
+- **Display**: 1280x720 minimum resolution
 
-## 🔄 **Migrating from v1**
+### Installation Steps
+```bash
+# 1. Clone the repository
+git clone https://github.com/ydinai001/account-mapping-app.git
+cd account-mapping-app
 
-### **Key Differences**
-- **Single vs Multiple**: v1 handles one project, v2 handles multiple
-- **File Structure**: v2 expects workbooks with multiple sheets
-- **UI Layout**: v2 adds project selection and context awareness
-- **Data Storage**: v2 uses project-isolated storage format
+# 2. Create virtual environment (recommended)
+python3 -m venv .venv
 
-### **Backward Compatibility**
-- v1 single-sheet files can be used by treating them as single-project workbooks
-- Existing mapping files can be imported for individual projects
-- Same core mapping algorithms and logic
+# 3. Activate virtual environment
+source .venv/bin/activate  # macOS/Linux
+# or
+.venv\Scripts\activate  # Windows
 
-## 🐛 **Troubleshooting**
+# 4. Install dependencies
+pip install -r requirements.txt
 
-### **Common Issues**
-
-**"No projects found"**
-- Ensure cell A1 contains project names in each sheet
-- Verify Excel file format is supported (.xlsx or .xls)
-- Check for file encryption and provide password if needed
-
-**"Rolling sheet not found"**
-- Verify rolling workbook contains expected sheet names
-- Check sheet name matching (case-sensitive)
-- Ensure rolling workbook is accessible
-
-**"Project switching not working"**
-- Ensure projects were properly loaded from source workbook
-- Check project settings file (project_settings.json)
-- Restart application to reload projects
-
-### **File Format Support**
-- **.xlsx files**: Full support with openpyxl
-- **.xls files**: Supported via xlrd
-- **Encrypted files**: Supported via msoffcrypto-tool
-- **Password protection**: Automatic detection and handling
-
-## 📈 **Version History**
-
-- **v2.1** (July 2025): Backup system improvements, file cleanup, Excel formula preservation
-- **v2.0**: Multi-project support, enhanced UI, project management
-- **v1.5**: Virtual environment setup, enhanced documentation
-- **v1.4**: UI improvements, font sizing, reset functionality
-- **v1.3**: Zoom controls and window resizing
-- **v1.2**: Confidence display fixes
-- **v1.1**: Monthly P&L statement generation
-- **v1.0**: Initial single-project release
-
-### **Recent Updates (July 2025)**
-- **Formula Preservation**: Maintains Excel formulas when updating rolling P&L
-- **Export Improvements**: Fixed "Export All Projects" functionality
-- **Auto-Export**: Streamlined workflow with automatic finalization
-- **File Management**: Cleaned up duplicate files and old backups
-- **Performance**: Added test_performance.py for optimization testing
-
-## 📋 **Feature Inventory**
-
-### **UI Components & Windows**
-
-#### **Main Interface Elements**
-- **Project Selector**: Dropdown menu for quick project switching
-- **File Upload Areas**: Drag-and-drop or browse functionality for Excel files
-- **Range Input Fields**: Smart validation with preview capabilities
-- **Status Bar**: Real-time feedback and progress indicators
-- **Treeview Tables**: Interactive data grids with sorting/filtering
-
-#### **Dialog Windows**
-- **Range Preview Dialog**: Live visualization of selected Excel ranges
-- **Column Selection Dialog**: Manual column mapping for exports
-- **Edit Mapping Dialog**: Individual account mapping editor
-- **Backup Selection Menu**: Choose from timestamped backups
-- **Progress Dialogs**: Track bulk operations with cancel options
-
-#### **Pop-out Windows**
-- **Step 2 Mapping Window**: Full-featured mapping interface
-- **Step 3 Preview Window**: Statement preview with export controls
-- **Synchronized Updates**: Real-time data sync between windows
-- **Resizable/Movable**: Flexible window positioning
-
-### **Business Logic Modules**
-
-#### **Account Mapping Engine** (`generate_automatic_mappings()`)
-- **Fuzzy String Matching**: Intelligent pattern recognition
-- **Confidence Scoring**: High/Medium/Low scoring system
-- **Caching System**: Performance-optimized matching
-- **Pattern Recognition**: Handles variations in account names
-- **Manual Override**: User can adjust automated suggestions
-
-#### **Excel Processing** (`_load_excel_with_cache()`, `extract_accounts()`)
-- **Formula Evaluation**: Reads calculated values using openpyxl
-- **Multi-sheet Support**: Handles complex workbook structures
-- **Range Extraction**: Precise data selection from spreadsheets
-- **Column Detection**: Smart header matching for data alignment
-- **Format Preservation**: Maintains Excel formulas and formatting
-
-#### **Project Management** (`project_manager.py`)
-- **Multi-project Isolation**: Independent settings per project
-- **State Persistence**: Saves all project data and UI state
-- **Sheet Association**: Links projects to rolling P&L sheets
-- **Settings Management**: JSON-based configuration storage
-
-### **Data Storage & Integrations**
-
-#### **File-Based Storage**
-```json
-{
-  "project_settings.json": "Multi-project configurations",
-  "range_settings.json": "Excel range specifications",
-  "range_memory.json": "Persistent range memory",
-  "[project]_mapping.json": "Individual project mappings"
-}
+# 5. Run the application
+python3 run_app_v2.py
 ```
 
-#### **Caching Systems**
-- **DataFrame Cache**: Loaded Excel files with timestamp validation
-- **Fuzzy Match Cache**: Pre-computed similarity scores
-- **Rolling Accounts Cache**: Quick access for edit dialogs
-- **Target Month Cache**: Speeds up statement regeneration
-- **Source Amounts Cache**: Avoids repeated extractions
+### Dependencies
+- **pandas**: Excel file processing and data manipulation
+- **openpyxl**: Excel file reading/writing with formula support
+- **tkinter**: GUI framework (included with Python)
+- **msoffcrypto-tool**: Password-protected Excel support (optional)
 
-#### **Excel Integration**
-- **Read Operations**: openpyxl with formula evaluation
-- **Write Operations**: Preserves existing formulas
-- **Format Support**: .xlsx and .xls files
-- **Password Protection**: Handles encrypted workbooks
+## User Guide
 
-### **Advanced Features**
+### Getting Started
+1. **Launch Application**: Run `python3 run_app_v2.py`
+2. **Upload Source P&L**: Click "Browse" and select your multi-project workbook
+3. **Scan Projects**: Click "Scan Projects" to detect all available projects
+4. **Select Project**: Choose a project from the dropdown menu
+5. **Upload Rolling P&L**: Select your rolling P&L template file
+6. **Configure Ranges**: Set source and rolling account ranges
+7. **Generate Mappings**: Click "Generate Automatic Mappings"
+8. **Review and Edit**: Double-click any mapping to modify
+9. **Generate Statement**: Click "Generate Monthly Statement"
+10. **Export Results**: Save the final rolling P&L with actual data
 
-#### **Keyboard Shortcuts**
-- **Space**: Toggle checkbox selection
-- **Enter**: Edit selected mapping
-- **Arrow Keys**: Navigate through items
-- **Cmd/Ctrl +/-**: Zoom in/out
-- **Double-click**: Quick edit mode
+### Keyboard Shortcuts
+- **Cmd/Ctrl + Plus**: Zoom in
+- **Cmd/Ctrl + Minus**: Zoom out
+- **Cmd/Ctrl + 0**: Reset zoom
+- **Double-click**: Edit mapping
+- **Right-click**: Context menu
 
-#### **Bulk Operations**
-- **Select All/None**: Quick selection management
-- **Bulk Edit**: Modify multiple mappings at once
-- **Export All Projects**: Single-click full export
-- **Auto-process**: Complete workflow automation
-- **Progress Tracking**: Visual feedback for long operations
+### Tips for Best Results
+1. **Consistent Naming**: Use consistent account names across projects
+2. **Range Selection**: Include all accounts in your range specifications
+3. **Manual Review**: Always review automatic mappings before generating statements
+4. **Regular Backups**: The app creates automatic backups, but keep your own too
+5. **Save Mappings**: Export mappings for reuse in future periods
 
-#### **Performance Features**
+## Technical Details
+
+### Performance Optimizations
 - **Lazy Loading**: Data loaded only when needed
-- **Smart Caching**: Timestamp-based cache validation
-- **Deferred Filtering**: Timer-based filter execution
-- **Optimized Updates**: Minimal UI redraws
-- **Background Processing**: Non-blocking operations
+- **Caching Strategy**: Multi-level caching for repeated operations
+- **Batch Processing**: Bulk operations for better performance
+- **Memory Management**: Efficient data structure usage
 
-### **Workflow Steps**
+### Error Handling
+- **File Access Errors**: Graceful handling of locked/missing files
+- **Data Validation**: Comprehensive input validation
+- **Recovery Options**: Automatic backup restoration
+- **User Feedback**: Clear error messages with solutions
 
-#### **Step 1: File Upload & Setup**
-- Automatic project detection from workbook
-- Rolling sheet selection per project
-- Range specification with memory
-- File validation and error handling
+### Security Features
+- **No Network Access**: Completely offline operation
+- **Local Storage Only**: All data stored locally
+- **Password Support**: Handles encrypted Excel files
+- **Data Isolation**: Projects cannot access each other's data
 
-#### **Step 2: Account Mapping**
-- Automatic mapping generation
-- Manual adjustment capabilities
-- Confidence score display
-- Filter/sort functionality
-- Bulk selection tools
+## Troubleshooting
 
-#### **Step 3: Monthly Statement**
-- Target month identification
-- Historical data extraction
-- Preview before generation
-- Column selection options
+### Common Issues and Solutions
 
-#### **Step 4: Export & Finalize**
-- Individual project export
-- Bulk export all projects
-- Auto-export workflow
-- Progress monitoring
+#### "No projects found in workbook"
+- **Cause**: Cell A1 doesn't contain project names
+- **Solution**: Ensure each sheet has project name in cell A1
 
-### **UI State Management**
+#### "Account 8540 not showing after restart"
+- **Cause**: Old mapping file overwriting updates
+- **Solution**: Fixed in latest version - mappings now persist correctly
 
-#### **Persistent State**
-- Filter values per project
-- Sort preferences
-- Zoom levels
-- Window geometry
-- Selection states
+#### "Cannot write to rolling P&L"
+- **Cause**: File is open in Excel
+- **Solution**: Close the file in Excel before generating statement
 
-#### **Real-time Updates**
-- Status messages
-- Button state management
-- Progress indicators
-- Data synchronization
-- Modified state tracking
+#### "Mappings not saving"
+- **Cause**: Permission issues or file conflicts
+- **Solution**: Check file permissions and ensure write access
 
-### **Backup & Recovery**
+#### "Performance is slow"
+- **Cause**: Large Excel files or many projects
+- **Solution**: 
+  - Reduce range sizes to necessary cells only
+  - Process projects individually
+  - Close other applications
 
-#### **Automatic Backups**
-- Timestamped snapshots
-- Project data preservation
-- Settings backup
-- Metadata storage
-- 8-backup retention policy
+### Debug Mode
+For troubleshooting, uncomment debug lines in:
+- `project_manager.py`: Lines 527-528, 535-543 (save verification)
+- `main_v2.py`: Various `pass` statements replaced with print statements
 
-#### **Restore Features**
-- Complete system restore
-- Individual project restore
-- Settings recovery
-- UI state restoration
-- Selective restoration
+## Version History
 
-## 🔮 **Future Enhancements**
+### v2.2 (August 2025) - Current
+- **Fix**: Prevented old mapping files from overwriting updated mappings
+- **Feature**: Automatic detection and addition of new accounts
+- **Fix**: Object reference consistency between current_project and manager
+- **Enhancement**: Improved save verification and debugging
 
-- **Batch Processing**: Process multiple projects simultaneously
-- **Template Management**: Save and reuse project templates
-- **Advanced Reporting**: Cross-project analysis and reporting
-- **Database Integration**: Store projects in database instead of JSON
-- **Cloud Sync**: Synchronize projects across multiple devices
+### v2.1 (July 2025)
+- **Feature**: Pop-out windows for Steps 2 and 3
+- **Enhancement**: Advanced filtering and search capabilities
+- **Fix**: Source amount display during filtering
+- **Feature**: Bulk editing with checkbox selection
+- **Enhancement**: Bold category headings and improved spacing
+
+### v2.0 (July 2025)
+- **Major**: Multi-project support architecture
+- **Feature**: Automatic project detection from workbooks
+- **Enhancement**: Project isolation and switching
+- **Feature**: Persistent project settings
+
+### v1.x Series
+- Initial single-project version
+- Basic mapping functionality
+- Manual editing capabilities
+
+## Development Notes
+
+### Code Organization
+- **Modular Design**: Separation of concerns between UI and logic
+- **Event-Driven**: Tkinter event handling for responsive UI
+- **State Management**: Centralized project state management
+- **Error Boundaries**: Try-catch blocks at all entry points
+
+### Future Enhancements (Planned)
+- [ ] Cloud storage integration
+- [ ] Mapping templates library
+- [ ] Advanced reporting features
+- [ ] API for external integrations
+- [ ] Multi-user collaboration
+
+## Support & Contributing
+
+### Getting Help
+- Check this README for comprehensive documentation
+- Review CLAUDE.md for development guidance
+- Check existing issues on GitHub
+
+### Contributing
+1. Work on `testing` branch only
+2. Follow existing code style
+3. Add tests for new features
+4. Update documentation
+5. Submit pull request to `testing` branch
+
+### License
+Proprietary - All rights reserved
 
 ---
 
-**Note**: This is Version 2 of the Account Mapping Tool. For single-project usage, the original `main.py` application remains available and fully functional.
+**Last Updated**: August 2025  
+**Version**: 2.2  
+**Maintainer**: Account Mapping Development Team
