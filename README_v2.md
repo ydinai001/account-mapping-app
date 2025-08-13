@@ -2,6 +2,11 @@
 
 A professional Python Tkinter desktop application for mapping account descriptions between multiple P&L projects in Excel workbooks with intelligent pattern recognition, manual editing capabilities, and automated monthly statement generation.
 
+> ⚠️ **Important: Python 3.13 Required**  
+> This application requires Python 3.13 specifically for proper mouse event handling in Tkinter.  
+> Other Python versions may cause mouse clicks to not respond consistently.  
+> **Recommended command**: `/usr/local/bin/python3.13 run_app_v2.py`
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Core Features](#core-features)
@@ -40,7 +45,12 @@ The Account Mapping Tool v2 is a sophisticated desktop application designed for 
 
 ### 📊 Excel Integration
 - **Formula Preservation**: Maintains Excel formulas when updating cells
+- **SUM Formula Generation**: Creates intelligent formulas that preserve existing values
+  - Empty cells: Writes new value directly
+  - Cells with values: Creates `=existing_value + new_value`
+  - Cells with formulas: Creates `=(existing_formula) + new_value`
 - **Multi-Sheet Support**: Handles complex workbooks with multiple sheets
+- **Subtotal Handling**: Displays subtotal accounts with amounts but no mapping
 - **Password Protection**: Supports encrypted Excel files
 - **Format Flexibility**: Works with .xlsx and .xls formats
 
@@ -51,11 +61,16 @@ The Account Mapping Tool v2 is a sophisticated desktop application designed for 
 - **Session Recovery**: Restores last state on restart
 
 ### 🎨 Advanced UI Features
-- **Pop-out Windows**: Detachable mapping and preview windows
+- **Pop-out Windows**: Detachable mapping and preview windows with intelligent centering
+  - All windows open centered on main application screen
+  - Consistent sizing (1400x850) for Step 2 and Step 3 windows
+  - No initial repositioning flash - windows appear directly in place
+  - Windows stay on same monitor as main application
 - **Zoom Controls**: Adjustable interface scaling (Cmd+/- or Ctrl+/-)
 - **Real-time Filtering**: Search and filter mappings instantly
 - **Bulk Editing**: Select multiple accounts for batch operations
 - **Progress Indicators**: Visual feedback for long operations
+- **Enhanced Scrolling**: Mouse wheel works anywhere in the application window
 
 ## Application Architecture
 
@@ -449,19 +464,44 @@ The application implements a multi-level caching strategy for performance:
 ## Installation & Setup
 
 ### System Requirements
-- **Python**: 3.13 or higher
+- **Python**: 3.13 specifically (required for consistent mouse event handling)
+  - ⚠️ **Important**: Other Python versions may cause mouse clicks to not respond consistently
+  - Tkinter event handling works best with Python 3.13
 - **Operating System**: Windows, macOS, or Linux
 - **Memory**: 4GB RAM minimum (8GB recommended)
 - **Display**: 1280x720 minimum resolution
 
 ### Installation Steps
+
+#### First, verify Python 3.13 is installed:
+```bash
+# Check if Python 3.13 is available
+python3.13 --version
+# or on macOS with Homebrew:
+/usr/local/bin/python3.13 --version
+```
+
+#### Option 1: Direct Execution (Recommended)
 ```bash
 # 1. Clone the repository
 git clone https://github.com/ydinai001/account-mapping-app.git
 cd account-mapping-app
 
-# 2. Create virtual environment (recommended)
-python3 -m venv .venv
+# 2. Install dependencies directly with Python 3.13
+/usr/local/bin/python3.13 -m pip install -r requirements.txt
+
+# 3. Run the application with full Python 3.13 path
+/usr/local/bin/python3.13 run_app_v2.py
+```
+
+#### Option 2: Using Virtual Environment
+```bash
+# 1. Clone the repository
+git clone https://github.com/ydinai001/account-mapping-app.git
+cd account-mapping-app
+
+# 2. Create virtual environment with Python 3.13
+/usr/local/bin/python3.13 -m venv .venv
 
 # 3. Activate virtual environment
 source .venv/bin/activate  # macOS/Linux
@@ -472,7 +512,7 @@ source .venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 
 # 5. Run the application
-python3 run_app_v2.py
+python run_app_v2.py
 ```
 
 ### Dependencies
@@ -484,7 +524,9 @@ python3 run_app_v2.py
 ## User Guide
 
 ### Getting Started
-1. **Launch Application**: Run `python3 run_app_v2.py`
+1. **Launch Application**: Run `/usr/local/bin/python3.13 run_app_v2.py`
+   - For macOS users: Use the full path to ensure Python 3.13 is used
+   - For virtual environment: Activate venv first, then run `python run_app_v2.py`
 2. **Upload Source P&L**: Click "Browse" and select your multi-project workbook
 3. **Scan Projects**: Click "Scan Projects" to detect all available projects
 4. **Select Project**: Choose a project from the dropdown menu
@@ -514,8 +556,12 @@ python3 run_app_v2.py
 ### Performance Optimizations
 - **Lazy Loading**: Data loaded only when needed
 - **Caching Strategy**: Multi-level caching for repeated operations
+  - Rolling preview uses separate cache without formula evaluation
+  - DataFrame cache prevents redundant Excel file reads
 - **Batch Processing**: Bulk operations for better performance
 - **Memory Management**: Efficient data structure usage
+- **Window Geometry**: Optimized positioning calculations with `update_idletasks()`
+- **Preview Performance**: Rolling range preview loads without expensive month detection
 
 ### Error Handling
 - **File Access Errors**: Graceful handling of locked/missing files
@@ -563,7 +609,17 @@ For troubleshooting, uncomment debug lines in:
 
 ## Version History
 
-### v2.3 (August 2025) - Current
+### v2.4 (August 2025) - Current
+- **Enhancement**: Universal window centering system for all pop-out windows
+- **Fix**: Pop-out windows now open on same screen as main application
+- **Enhancement**: Consistent window sizing (1400x850) for Step 2 and Step 3
+- **Fix**: Eliminated initial corner flash for all pop-out windows
+- **Performance**: Optimized rolling range preview loading speed
+- **UX**: Improved scrolling to work in gaps between subwindows
+- **Feature**: Added `center_window_on_parent()` method for unified dialog positioning
+- **Enhancement**: All pop-out windows use transient relationship with main window
+
+### v2.3 (August 2025)
 - **Feature**: Subtotals now included in Step 2 with amounts
 - **Enhancement**: Extract and display all accounts including totals
 - **Fix**: Modified `extract_range_data()` to include subtotal accounts
@@ -634,6 +690,6 @@ Proprietary - All rights reserved
 
 ---
 
-**Last Updated**: August 2025  
-**Version**: 2.3  
+**Last Updated**: August 13, 2025  
+**Version**: 2.4  
 **Maintainer**: Account Mapping Development Team
