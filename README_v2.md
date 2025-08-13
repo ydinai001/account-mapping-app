@@ -140,37 +140,105 @@ account-mapping-app/
    - System validates sheet existence
 
 #### Step 2: Map Account Descriptions
+
+##### Data Flow in Step 2:
+```
+1. EXTRACTION PHASE
+   Source Excel → extract_range_data() → Source Accounts List
+   Rolling Excel → extract_range_data() → Rolling Accounts List
+   
+2. MAPPING GENERATION
+   Source + Rolling Lists → create_intelligent_mappings() → Mappings Dict
+   └── Fuzzy String Matching (difflib.SequenceMatcher)
+   └── Confidence Scoring (High >80%, Medium >60%, Low >40%)
+   └── Subtotals get empty mappings (no rolling account)
+   
+3. AMOUNT EXTRACTION
+   Source Excel → extract_monthly_amounts() → Monthly Amounts Dict
+   └── Finds target month column (searches for date patterns)
+   └── Extracts amounts for ALL accounts (including subtotals)
+   └── Caches results in source_amounts_cache
+   
+4. UI PRESENTATION
+   populate_mapping_tree()
+   ├── Regular Accounts: Checkbox + Description + Amount + Mapping + Confidence
+   ├── Subtotals: No Checkbox + Bold Description + Amount + No Mapping
+   └── Preserves Excel source order exactly
+```
+
+##### Key Components:
 1. **Range Configuration**:
    - User specifies source account range (e.g., A8:F200)
    - User specifies rolling account range (e.g., A1:A100)
    - Live preview shows extracted data
+   - Ranges saved to `project_settings.json` and `range_memory.json`
 
 2. **Automatic Mapping Generation**:
-   - System extracts accounts from both ranges
-   - Applies fuzzy matching algorithm
-   - Generates confidence scores
-   - Creates initial mappings
+   - System extracts accounts from both ranges (including subtotals)
+   - Applies fuzzy matching algorithm (difflib)
+   - Generates confidence scores based on similarity
+   - Creates initial mappings (subtotals get empty mappings)
 
-3. **Manual Editing**:
+3. **Subtotal Handling** (NEW in v2.2):
+   - Subtotals identified by "total" keyword in description
+   - Extracted with their amounts but no mapping capability
+   - Display in bold without checkboxes
+   - Maintain exact Excel source order
+
+4. **Manual Editing**:
    - Double-click to edit individual mappings
    - Bulk edit for multiple selections
    - Search and filter capabilities
-   - All edits preserved immediately
+   - All edits marked as `"user_edited": true`
+   - Saved immediately to `project_settings.json`
 
 #### Step 3: Review Mapped Accounts & Generate Statement
+
+##### Data Flow in Step 3:
+```
+1. MONTHLY DATA EXTRACTION
+   Source Excel + Mappings → extract_monthly_amounts()
+   └── Reads from target month column
+   └── Uses cached data if available
+   └── Returns: {"Account": Amount} dict
+   
+2. AGGREGATION PHASE
+   Monthly Data + Mappings → aggregate_by_mappings()
+   └── Groups amounts by rolling account
+   └── Skips accounts with empty mappings (subtotals)
+   └── Returns: {"Rolling Account": Total Amount} dict
+   
+3. PREVIEW PREPARATION
+   Rolling Excel + Aggregated Data → prepare_preview_data()
+   ├── Reads previous month column
+   ├── Matches with aggregated current month
+   └── Returns: [(Account, Previous, Current)] list
+   
+4. DATA PERSISTENCE
+   All data saved to project_settings.json:
+   ├── monthly_data (raw amounts)
+   ├── aggregated_data (grouped totals)
+   ├── preview_data (for display)
+   └── target_month (detected column header)
+```
+
+##### Key Components:
 1. **Preview Generation**:
-   - System aggregates amounts by mapped categories
+   - Extracts amounts from source P&L target month column
+   - Aggregates by mapped rolling account categories
    - Shows 3-column preview (Account, Previous Month, Current Month)
-   - Detects target month automatically
+   - Detects target month automatically from column headers
 
 2. **Data Validation**:
    - Verifies all mappings are complete
    - Checks for missing amounts
    - Validates target cells in rolling P&L
+   - Subtotals excluded from aggregation (empty mappings)
 
 3. **Statement Generation**:
    - Writes aggregated data to rolling P&L
-   - Preserves existing formulas
+   - Preserves existing Excel formulas
+   - Updates only data cells, not formula cells
    - Handles conflicts gracefully
 
 #### Step 4: Save Final Rolling P&L with Actual Data
@@ -196,7 +264,41 @@ The application intelligently detects when all requirements are met and can auto
 - **Order Preservation**: Maintains source file account order
 - **Manual Override Protection**: Never overwrites user edits
 
-## Data Management
+## Data Management & Architecture
+
+### Data Storage Hierarchy
+
+The application uses a sophisticated multi-tier data management system:
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  USER INTERFACE                      │
+│            (Tkinter GUI - main_v2.py)               │
+└─────────────────────────────────────────────────────┘
+                          ↕
+┌─────────────────────────────────────────────────────┐
+│               APPLICATION MEMORY                     │
+│  • current_project (active Project object)          │
+│  • projects dict (all Project objects)              │
+│  • Cache layers (DataFrames, amounts, accounts)     │
+└─────────────────────────────────────────────────────┘
+                          ↕
+┌─────────────────────────────────────────────────────┐
+│              PROJECT MANAGER                         │
+│         (project_manager.py)                        │
+│  • Handles project switching                        │
+│  • Manages persistence                              │
+│  • Coordinates saves/loads                          │
+└─────────────────────────────────────────────────────┘
+                          ↕
+┌─────────────────────────────────────────────────────┐
+│             PERSISTENT STORAGE                       │
+│  • project_settings.json (main data)                │
+│  • range_memory.json (range persistence)            │
+│  • range_settings.json (default ranges)             │
+│  • Excel files (source data)                        │
+└─────────────────────────────────────────────────────┘
+```
 
 ### Project Settings Structure
 ```json
@@ -225,51 +327,121 @@ The application intelligently detects when all requirements are met and can auto
           "confidence": "Manual",
           "similarity": 100.0,
           "user_edited": true
+        },
+        "Total Rental Income": {
+          "rolling_account": "",
+          "confidence": "None",
+          "similarity": 0,
+          "user_edited": false
         }
       },
-      "monthly_data": {},
-      "aggregated_data": {},
+      "monthly_data": {
+        "8000 Rental Income": 50000.00,
+        "8540 Other Exterior Replacement": 5020.00,
+        "Total Rental Income": 55020.00
+      },
+      "aggregated_data": {
+        "Rental Revenue": 50000.00,
+        "Other Income": 5020.00
+      },
+      "preview_data": [],
       "target_month": "Jun-25",
       "step4_completed": false,
       "workflow_state": {
         "step1_complete": true,
         "step2_complete": true,
         "step3_complete": false,
-        "step4_complete": false
+        "step4_complete": false,
+        "has_generated_mappings": true,
+        "has_generated_monthly": false
       },
       "ui_state": {
         "filter_value": "",
         "sort_value": "",
         "zoom_level": 1.0,
-        "checkbox_states": {}
+        "checkbox_states": {},
+        "last_active_step": 2
       }
     }
   }
 }
 ```
 
+### Data Loading Sequence (On Startup)
+
+1. **Application Launch** (`run_app_v2.py`)
+   ```python
+   ProjectManager.__init__()
+   ├── load_settings() → Reads project_settings.json
+   ├── load_range_memory() → Reads range_memory.json
+   └── Creates Project objects from saved data
+   ```
+
+2. **Project Restoration** 
+   ```python
+   Project.from_dict()
+   ├── Restores mappings (OrderedDict)
+   ├── Restores monthly_data (amounts)
+   ├── Restores aggregated_data
+   ├── Restores workflow_state
+   └── Restores ui_state
+   ```
+
+3. **New Account Detection**
+   ```python
+   check_and_add_new_accounts()
+   ├── Extracts current source accounts
+   ├── Compares with existing mappings
+   ├── Adds new accounts with fuzzy matching
+   └── Preserves source file order
+   ```
+
+### Cache Management System
+
+The application implements a multi-level caching strategy for performance:
+
+#### 1. **DataFrame Cache** (`_excel_cache`)
+- **Purpose**: Avoid re-reading Excel files
+- **Key Format**: `"{file_path}:{sheet_name}"`
+- **Lifetime**: Application session
+- **Size**: Unlimited during session
+
+#### 2. **Source Amounts Cache** (`source_amounts_cache`)
+- **Purpose**: Store extracted monthly amounts
+- **Key Format**: `"{project_name}:{file_path}:{range}"`
+- **Lifetime**: Cleared when ranges change
+- **Usage**: Step 2 display, Step 3 aggregation
+
+#### 3. **Rolling Accounts Cache** (`rolling_accounts_cache`)
+- **Purpose**: Quick access to target accounts
+- **Key Format**: `"{project_name}:{rolling_range}"`
+- **Lifetime**: Session or until range changes
+- **Usage**: Dropdown populations, validations
+
+#### 4. **Target Month Cache** (`target_month_cache`)
+- **Purpose**: Remember which column has current month data
+- **Key Format**: `"{project_name}:{file_path}"`
+- **Lifetime**: Session
+- **Usage**: Speeds up repeated extractions
+
 ### Mapping Priority System
 1. **User Manual Edits** (Highest Priority)
    - Always preserved across sessions
    - Never overwritten by automatic generation
-   - Marked with "Manual" confidence
+   - Marked with `"user_edited": true`
+   - Confidence set to "Manual"
 
 2. **Project Settings File** (`project_settings.json`)
    - Primary source of truth
    - Loaded on startup
    - Updated after every change
+   - Contains all project data
 
 3. **External Mapping Files** (Lowest Priority)
    - Only loaded if no mappings exist
    - Used for initial import
    - Not loaded if project has existing mappings
-
-### Cache Management
-The application uses multiple caching layers for performance:
-- **DataFrame Cache**: Loaded Excel files
-- **Fuzzy Match Cache**: String similarity results
-- **Source Amounts Cache**: Extracted monthly amounts
-- **Rolling Accounts Cache**: Available target accounts
+   - Prevented from overwriting (fix in v2.2)
 
 ## Installation & Setup
 
@@ -388,11 +560,21 @@ For troubleshooting, uncomment debug lines in:
 
 ## Version History
 
-### v2.2 (August 2025) - Current
+### v2.3 (August 2025) - Current
+- **Feature**: Subtotals now included in Step 2 with amounts
+- **Enhancement**: Extract and display all accounts including totals
+- **Fix**: Modified `extract_range_data()` to include subtotal accounts
+- **Fix**: Updated `extract_monthly_amounts()` to extract amounts for subtotals
+- **Enhancement**: Subtotals display in bold without checkboxes or mapping options
+- **Documentation**: Comprehensive README update with data flow architecture
+
+### v2.2 (August 2025)
 - **Fix**: Prevented old mapping files from overwriting updated mappings
 - **Feature**: Automatic detection and addition of new accounts
 - **Fix**: Object reference consistency between current_project and manager
 - **Enhancement**: Improved save verification and debugging
+- **Feature**: Main window scrollbar for easier navigation
+- **Fix**: Context-aware scrolling to prevent subwindow scroll conflicts
 
 ### v2.1 (July 2025)
 - **Feature**: Pop-out windows for Steps 2 and 3
@@ -447,5 +629,5 @@ Proprietary - All rights reserved
 ---
 
 **Last Updated**: August 2025  
-**Version**: 2.2  
+**Version**: 2.3  
 **Maintainer**: Account Mapping Development Team
