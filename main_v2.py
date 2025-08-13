@@ -319,9 +319,28 @@ class MultiProjectAccountMappingApp:
                                    font=("Arial", 9), foreground="gray")
         copyright_label.pack(side=tk.RIGHT)
         
-        # Main container (pack after footer to use remaining space)
-        main_frame = ttk.Frame(self.root)
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(10, 0))
+        # Create canvas and scrollbar for main content
+        canvas_container = ttk.Frame(self.root)
+        canvas_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=(10, 0))
+        
+        # Create canvas for scrolling
+        self.main_canvas = tk.Canvas(canvas_container, highlightthickness=0)
+        self.main_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Create vertical scrollbar
+        v_scrollbar = ttk.Scrollbar(canvas_container, orient=tk.VERTICAL, command=self.main_canvas.yview)
+        v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Configure canvas to use scrollbar
+        self.main_canvas.configure(yscrollcommand=v_scrollbar.set)
+        
+        # Create scrollable frame inside canvas
+        self.scrollable_frame = ttk.Frame(self.main_canvas)
+        self.scrollable_frame_id = self.main_canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        
+        # Main container inside scrollable frame
+        main_frame = ttk.Frame(self.scrollable_frame)
+        main_frame.pack(fill=tk.BOTH, expand=True)
         
         # Create header with project info and controls
         self.create_header(main_frame)
@@ -348,6 +367,115 @@ class MultiProjectAccountMappingApp:
         
         # Step 3: Monthly statements section (fixed height)
         self.create_step4_monthly_section(content_frame, 3)
+        
+        # Configure scroll region after content is created
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.update_scroll_region()
+        )
+        
+        # Ensure canvas width matches container
+        self.main_canvas.bind(
+            "<Configure>",
+            lambda e: self.configure_canvas_width()
+        )
+        
+        # Bind mouse wheel to canvas for scrolling
+        self.bind_mouse_wheel()
+    
+    def bind_mouse_wheel(self):
+        """Bind mouse wheel events for scrolling"""
+        # Bind to canvas only, not globally
+        # Different bindings for different platforms
+        if self.root.tk.call('tk', 'windowingsystem') == 'aqua':  # macOS
+            self.main_canvas.bind("<MouseWheel>", self.on_mouse_wheel)
+            self.main_canvas.bind("<Shift-MouseWheel>", self.on_shift_mouse_wheel)
+        else:  # Windows and Linux
+            self.main_canvas.bind("<MouseWheel>", self.on_mouse_wheel)
+            self.main_canvas.bind("<Button-4>", self.on_mouse_wheel_up)
+            self.main_canvas.bind("<Button-5>", self.on_mouse_wheel_down)
+        
+        # Also bind to scrollable frame
+        if self.root.tk.call('tk', 'windowingsystem') == 'aqua':  # macOS
+            self.scrollable_frame.bind("<MouseWheel>", self.on_mouse_wheel)
+        else:  # Windows and Linux
+            self.scrollable_frame.bind("<MouseWheel>", self.on_mouse_wheel)
+            self.scrollable_frame.bind("<Button-4>", self.on_mouse_wheel_up)
+            self.scrollable_frame.bind("<Button-5>", self.on_mouse_wheel_down)
+    
+    def on_mouse_wheel(self, event):
+        """Handle mouse wheel scrolling"""
+        # Check if we're over a widget that should handle its own scrolling
+        widget = self.root.winfo_containing(event.x_root, event.y_root)
+        
+        # Check if the widget under mouse is a Treeview or Text widget (they handle their own scrolling)
+        if widget:
+            widget_class = widget.winfo_class()
+            # Check widget and its parents for scrollable widgets
+            check_widget = widget
+            while check_widget:
+                if isinstance(check_widget, (ttk.Treeview, tk.Text, tk.Listbox)):
+                    # Let the widget handle its own scrolling
+                    return
+                try:
+                    check_widget = check_widget.master
+                except:
+                    break
+        
+        # Only scroll main canvas if we're not over a scrollable widget
+        if self.main_canvas.winfo_exists():
+            if self.root.tk.call('tk', 'windowingsystem') == 'aqua':  # macOS
+                self.main_canvas.yview_scroll(int(-1 * event.delta), "units")
+            else:  # Windows
+                self.main_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+    
+    def on_shift_mouse_wheel(self, event):
+        """Handle horizontal scrolling with shift+wheel (macOS)"""
+        # For horizontal scrolling if needed in future
+        pass
+    
+    def on_mouse_wheel_up(self, event):
+        """Handle mouse wheel up for Linux"""
+        # Check if we're over a scrollable widget
+        widget = self.root.winfo_containing(event.x_root, event.y_root)
+        if widget:
+            check_widget = widget
+            while check_widget:
+                if isinstance(check_widget, (ttk.Treeview, tk.Text, tk.Listbox)):
+                    return
+                try:
+                    check_widget = check_widget.master
+                except:
+                    break
+        
+        if self.main_canvas.winfo_exists():
+            self.main_canvas.yview_scroll(-1, "units")
+    
+    def on_mouse_wheel_down(self, event):
+        """Handle mouse wheel down for Linux"""
+        # Check if we're over a scrollable widget
+        widget = self.root.winfo_containing(event.x_root, event.y_root)
+        if widget:
+            check_widget = widget
+            while check_widget:
+                if isinstance(check_widget, (ttk.Treeview, tk.Text, tk.Listbox)):
+                    return
+                try:
+                    check_widget = check_widget.master
+                except:
+                    break
+        
+        if self.main_canvas.winfo_exists():
+            self.main_canvas.yview_scroll(1, "units")
+    
+    def update_scroll_region(self):
+        """Update the scroll region to encompass all content"""
+        self.main_canvas.configure(scrollregion=self.main_canvas.bbox("all"))
+    
+    def configure_canvas_width(self):
+        """Configure canvas width to match container"""
+        canvas_width = self.main_canvas.winfo_width()
+        self.main_canvas.itemconfig(self.scrollable_frame_id, width=canvas_width)
     
     def create_header(self, parent):
         """Create header with project title and controls"""

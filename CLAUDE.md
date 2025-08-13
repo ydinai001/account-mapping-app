@@ -135,7 +135,16 @@ account-mapping-app/
    - Check backup/restore functionality
 
 ### **Commit Guidelines:**
+
+**CRITICAL: Always wait for user to test changes before committing!**
+
 ```bash
+# WORKFLOW:
+# 1. Make changes
+# 2. Inform user changes are ready for testing
+# 3. WAIT for user to test
+# 4. ONLY commit after user confirms the changes work
+
 # On testing branch (default)
 git add .
 git commit -m "feat: description of feature"  # or fix:, docs:, refactor:
@@ -199,11 +208,13 @@ python3 run_app_v2.py
 - Force push to any branch
 - Reset commit history
 - Change repository settings
+- **NEVER commit changes to git before the user has tested them**
 
 ### **Always Do:**
 - Read README_v2.md at session start
 - Work on `testing` branch by default
 - Pull before starting work
+- **Wait for user to test changes before committing**
 - Test changes before committing
 - Write clear commit messages
 - Ask for confirmation on major changes
