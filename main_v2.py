@@ -155,6 +155,34 @@ class MultiProjectAccountMappingApp:
         
         self.root.geometry(f"{width}x{height}+{x}+{y}")
     
+    def center_window_on_parent(self, dialog, width, height):
+        """Center a dialog window on its parent window (main app window)"""
+        # First set the size and update to ensure proper geometry calculation
+        dialog.geometry(f"{width}x{height}")
+        dialog.update_idletasks()
+        
+        # Ensure parent window dimensions are current
+        self.root.update_idletasks()
+        
+        # Get parent window position and size
+        parent_x = self.root.winfo_rootx()
+        parent_y = self.root.winfo_rooty()
+        parent_width = self.root.winfo_width()
+        parent_height = self.root.winfo_height()
+        
+        # Calculate center position relative to parent
+        # This positions the dialog at the center of the parent window
+        x = parent_x + (parent_width - width) // 2
+        y = parent_y + (parent_height - height) // 2
+        
+        # Ensure x,y are not negative (keeps window on available screens)
+        x = max(0, x)
+        y = max(0, y)
+        
+        # Set the final geometry with position
+        dialog.geometry(f"{width}x{height}+{x}+{y}")
+        dialog.update_idletasks()
+    
     # ========== Performance Optimization Methods ==========
     
     def _get_file_timestamp(self, filepath):
@@ -2005,6 +2033,7 @@ class MultiProjectAccountMappingApp:
     def show_range_preview(self, data, title, range_str):
         """Show preview dialog with extracted data"""
         dialog = tk.Toplevel(self.root)
+        dialog.withdraw()  # Hide initially to prevent corner flash
         dialog.title(title)
         
         # Check if data contains tuples (account, amount) or just strings
@@ -2016,26 +2045,8 @@ class MultiProjectAccountMappingApp:
         dialog.transient(self.root)
         dialog.grab_set()
         
-        # Center the dialog relative to parent window
-        dialog.update_idletasks()
-        self.root.update_idletasks()  # Ensure parent window dimensions are current
-        
-        # Get parent window position and size
-        parent_x = self.root.winfo_x()
-        parent_y = self.root.winfo_y()
-        parent_width = self.root.winfo_width()
-        parent_height = self.root.winfo_height()
-        
-        # Calculate center position relative to parent
-        x = parent_x + (parent_width - dialog_width) // 2
-        y = parent_y + (parent_height - dialog_height) // 2
-        
-        # Ensure dialog stays on screen (with some margin)
-        x = max(50, x)  # Keep at least 50 pixels from left edge
-        y = max(50, y)  # Keep at least 50 pixels from top edge
-        
-        # Set the final geometry
-        dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
+        # Center the dialog using the unified method
+        self.center_window_on_parent(dialog, dialog_width, dialog_height)
         
         # Header
         header_frame = ttk.Frame(dialog, padding="10")
@@ -2098,6 +2109,9 @@ class MultiProjectAccountMappingApp:
         button_frame.pack(fill=tk.X)
         
         ttk.Button(button_frame, text="Close", command=dialog.destroy).pack(side=tk.RIGHT)
+        
+        # Show the dialog now that it's properly positioned and populated
+        dialog.deiconify()
     
     
     
@@ -5964,8 +5978,10 @@ class MultiProjectAccountMappingApp:
             pass
             return
             
-        # Create popup window
+        # Create popup window but don't show it yet
         self.popup_window = tk.Toplevel(self.root)
+        self.popup_window.withdraw()  # Hide window initially to prevent corner flash
+        self.popup_window.transient(self.root)  # Keep window with parent
         
         # Set title with current project name
         current_project = self.project_manager.get_current_project()
@@ -5977,11 +5993,10 @@ class MultiProjectAccountMappingApp:
         else:
             target_month_text = ""
         self.popup_window.title(f"Step 2: Review & Edit Mappings - {project_name}{target_month_text} - Pop Out")
-        self.popup_window.geometry("1200x800")
         self.popup_window.minsize(800, 600)
         
-        # Center the popup window
-        self.center_popup_window()
+        # Center the popup window on the main app window (use consistent size with Step 3)
+        self.center_window_on_parent(self.popup_window, 1400, 850)
         
         # Make it resizable
         self.popup_window.resizable(True, True)
@@ -6109,6 +6124,9 @@ class MultiProjectAccountMappingApp:
         # Update button state
         self.popup_button.config(text="🔲 Popped Out", state="disabled")
         self.is_popped_out = True
+        
+        # Show the window now that it's properly positioned and populated
+        self.popup_window.deiconify()
         
         # Handle window close
         self.popup_window.protocol("WM_DELETE_WINDOW", self.pop_in_mapping_window)
@@ -7573,6 +7591,7 @@ class MultiProjectAccountMappingApp:
             
         # Create popup window but don't show it yet
         self.step3_popup_window = tk.Toplevel(self.root)
+        self.step3_popup_window.transient(self.root)  # Keep window with parent
         self.step3_popup_window.withdraw()  # Hide window initially
         
         # Set title with current project name
@@ -7585,7 +7604,6 @@ class MultiProjectAccountMappingApp:
         else:
             target_month_text = ""
         self.step3_popup_window.title(f"Step 3: Rolling P&L Statement Preview - {project_name}{target_month_text} - Pop Out")
-        self.step3_popup_window.geometry("1600x900")  # Increased width for better column visibility
         self.step3_popup_window.minsize(800, 600)  # Match Step 2 popup resize limits for consistency
         
         # Make it resizable
@@ -7672,8 +7690,8 @@ class MultiProjectAccountMappingApp:
         # Copy all data from original preview tree to popup tree
         self.sync_preview_tree_data(self.preview_tree, self.step3_popup_tree)
         
-        # Now that everything is ready, center and show the window
-        self.center_step3_popup_window()
+        # Now that everything is ready, center on parent and show the window
+        self.center_window_on_parent(self.step3_popup_window, 1400, 850)
         self.step3_popup_window.deiconify()  # Show the window
         
         # Hide original preview tree
