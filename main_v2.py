@@ -3884,8 +3884,59 @@ class MultiProjectAccountMappingApp:
         
         return False
     
+    def create_sum_formula(self, existing_value, new_value):
+        """Create a SUM formula that combines existing value/formula with new value
+        
+        Args:
+            existing_value: The current cell value (can be None, number, or formula string)
+            new_value: The new value to add
+            
+        Returns:
+            The value to write to the cell (either a plain value or a formula string)
+        """
+        # Handle None or empty cells
+        if existing_value is None or existing_value == "" or existing_value == 0:
+            # Empty cell or zero - just write the new value directly
+            return new_value
+        
+        # Format new value for formula (handle negatives properly)
+        if new_value < 0:
+            new_value_str = f"({new_value})"
+        else:
+            new_value_str = str(new_value)
+        
+        # Handle existing formulas
+        if isinstance(existing_value, str) and existing_value.startswith('='):
+            # Existing formula - wrap it and add new value
+            # Remove the leading '=' from existing formula
+            existing_formula = existing_value[1:]
+            
+            # Check formula length limit (Excel has 8192 character limit)
+            new_formula = f"=({existing_formula})+{new_value_str}"
+            if len(new_formula) > 8000:  # Leave some buffer
+                # Formula too long, just return the new value
+                print(f"Warning: Formula would be too long, writing value directly instead")
+                return new_value
+            
+            return new_formula
+        
+        # Handle existing plain numbers
+        elif isinstance(existing_value, (int, float)):
+            # Format existing value for formula
+            if existing_value < 0:
+                existing_value_str = f"({existing_value})"
+            else:
+                existing_value_str = str(existing_value)
+            
+            # Create SUM formula
+            return f"={existing_value_str}+{new_value_str}"
+        
+        # Handle any other type (text, dates, etc.) - just write new value
+        else:
+            return new_value
+    
     def write_data_to_rolling_pnl(self, worksheet, target_col, current_project):
-        """Write aggregated data to the rolling P&L worksheet while preserving formulas and formatting"""
+        """Write aggregated data to the rolling P&L worksheet, creating SUM formulas to preserve existing values"""
         rolling_range = current_project.rolling_range
         
         # Parse rolling range to determine rows and column to check
@@ -3901,21 +3952,23 @@ class MultiProjectAccountMappingApp:
             
             # If we found an account description, check if we have data for it
             if account_desc and account_desc in current_project.aggregated_data:
-                value = current_project.aggregated_data[account_desc]
+                new_value = current_project.aggregated_data[account_desc]
                 
-                # Get the existing cell
+                # Get the existing cell and its value
                 existing_cell = worksheet.cell(row=row, column=target_col)
+                existing_value = existing_cell.value
                 
-                # Check if cell contains a formula (works for both old and new openpyxl versions)
-                has_formula = False
-                if hasattr(existing_cell, 'data_type') and existing_cell.data_type == 'f':
-                    has_formula = True
-                elif hasattr(existing_cell, 'value') and existing_cell.value and str(existing_cell.value).startswith('='):
-                    has_formula = True
+                # Create SUM formula or value to write
+                value_to_write = self.create_sum_formula(existing_value, new_value)
                 
-                # Only write if the cell doesn't contain a formula
-                if not has_formula:
-                    worksheet.cell(row=row, column=target_col, value=value)
+                # Write the value/formula to the cell
+                worksheet.cell(row=row, column=target_col).value = value_to_write
+                
+                # Log what we did for debugging
+                if isinstance(value_to_write, str) and value_to_write.startswith('='):
+                    print(f"Row {row}: Created formula for '{account_desc}': {value_to_write[:50]}...")
+                else:
+                    print(f"Row {row}: Wrote value for '{account_desc}': {value_to_write}")
     
     def parse_rolling_range_for_account_column(self, range_str):
         """Parse rolling range string to get start row, end row, and account column number"""

@@ -235,11 +235,14 @@ account-mapping-app/
    - Validates target cells in rolling P&L
    - Subtotals excluded from aggregation (empty mappings)
 
-3. **Statement Generation**:
-   - Writes aggregated data to rolling P&L
-   - Preserves existing Excel formulas
-   - Updates only data cells, not formula cells
-   - Handles conflicts gracefully
+3. **Statement Generation** (Enhanced in v2.3):
+   - Creates SUM formulas instead of overwriting values
+   - Preserves both existing values and formulas
+   - For empty cells: Writes new value directly
+   - For cells with values: Creates formula `=existing_value + new_value`
+   - For cells with formulas: Creates formula `=(existing_formula) + new_value`
+   - Handles negative numbers with proper parentheses
+   - Respects Excel formula length limits (8,192 characters)
 
 #### Step 4: Save Final Rolling P&L with Actual Data
 1. **Export Options**:
@@ -566,6 +569,9 @@ For troubleshooting, uncomment debug lines in:
 - **Fix**: Modified `extract_range_data()` to include subtotal accounts
 - **Fix**: Updated `extract_monthly_amounts()` to extract amounts for subtotals
 - **Enhancement**: Subtotals display in bold without checkboxes or mapping options
+- **Feature**: Step 3 export now creates SUM formulas instead of overwriting
+- **Enhancement**: Preserves existing values and formulas when exporting
+- **Feature**: Intelligent formula creation with negative number handling
 - **Documentation**: Comprehensive README update with data flow architecture
 
 ### v2.2 (August 2025)
