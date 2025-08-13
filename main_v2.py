@@ -1562,7 +1562,7 @@ class MultiProjectAccountMappingApp:
         # Don't load from mapping file if we already have mappings
         # This prevents overwriting updated mappings with old ones
         if current_project.mappings:
-            print(f"  ℹ️ Skipping mapping file load - already have {len(current_project.mappings)} mappings")
+            pass
             return False
         
         try:
@@ -1578,7 +1578,7 @@ class MultiProjectAccountMappingApp:
             mappings = self.load_mapping_file(current_project.mapping_file_path)
             
             if mappings:
-                print(f"  📂 Loading {len(mappings)} mappings from {os.path.basename(current_project.mapping_file_path)}")
+                pass
                 # Store mappings in current project
                 current_project.mappings = mappings
                 
@@ -3419,7 +3419,7 @@ class MultiProjectAccountMappingApp:
         current_project = self.project_manager.get_current_project()
         historical_data = self.get_historical_data_for_preview(current_project) if current_project else None
         
-        # Debug: Print historical data status
+        # Check historical data status
         if historical_data:
 
             pass
@@ -3567,7 +3567,7 @@ class MultiProjectAccountMappingApp:
                     # Get value from target month column
                     cell_value = ws.cell(row=row, column=target_col).value
                     
-                    # Debug: Show all values for first few rows
+                    # Show all values for first few rows
                     if row <= rolling_rows[0] + 10:  # First 10 rows
                         pass
                         
@@ -3994,7 +3994,7 @@ class MultiProjectAccountMappingApp:
             new_formula = f"=({existing_formula})+{new_value_str}"
             if len(new_formula) > 8000:  # Leave some buffer
                 # Formula too long, just return the new value
-                print(f"Warning: Formula would be too long, writing value directly instead")
+                pass
                 return new_value
             
             return new_formula
@@ -4045,9 +4045,9 @@ class MultiProjectAccountMappingApp:
                 
                 # Log what we did for debugging
                 if isinstance(value_to_write, str) and value_to_write.startswith('='):
-                    print(f"Row {row}: Created formula for '{account_desc}': {value_to_write[:50]}...")
+                    pass
                 else:
-                    print(f"Row {row}: Wrote value for '{account_desc}': {value_to_write}")
+                    pass
     
     def parse_rolling_range_for_account_column(self, range_str):
         """Parse rolling range string to get start row, end row, and account column number"""
@@ -5557,12 +5557,7 @@ class MultiProjectAccountMappingApp:
             new_accounts = [acc for acc in source_data if acc not in existing_accounts]
             
             if new_accounts:
-                print(f"\n🔍 Found {len(new_accounts)} new accounts to add:")
-                for acc in new_accounts:
-                    if '8540' in str(acc):
-                        print(f"  + {acc} (NEW ACCOUNT)")
-                    else:
-                        print(f"  + {acc}")
+                pass
                 
                 # Get rolling data for matching
                 rolling_data = self.extract_account_data("rolling", current_project.rolling_range)
@@ -5601,13 +5596,13 @@ class MultiProjectAccountMappingApp:
                 self.populate_mapping_tree(current_project.mappings)
                 self.update_ui_state()
                 
-                print(f"  ✅ Added {len(new_accounts)} new accounts, total mappings: {len(current_project.mappings)}")
+                pass
             else:
                 if not silent_mode:
-                    print("  ✅ No new accounts found - all accounts already mapped")
+                    pass
                     
         except Exception as e:
-            print(f"  ⚠️ Error checking for new accounts: {str(e)}")
+            pass
     
     def generate_mappings(self, silent_mode=False):
         """Generate automatic mappings between source and rolling accounts with confidence levels"""
@@ -5629,7 +5624,7 @@ class MultiProjectAccountMappingApp:
             cache_key = f"{current_project.name}:{current_project.source_file_path}:{source_range}"
             if cache_key in self.source_amounts_cache:
                 del self.source_amounts_cache[cache_key]
-                print(f"  🔄 Cleared source amounts cache for fresh extraction")
+                pass
         
         # Also clear alternative cache key format
         if current_project and self.project_manager.source_workbook_path:
@@ -5658,13 +5653,13 @@ class MultiProjectAccountMappingApp:
             source_data = self.extract_account_data("source", source_range)
             rolling_data = self.extract_account_data("rolling", rolling_range)
             
-            # Debug: Print source accounts to check if 8540 is included
-            print(f"\n📋 Extracted {len(source_data)} source accounts from range {source_range}")
+            # Check source accounts
+            pass
             for account in source_data:
                 if '8540' in str(account):
-                    print(f"  ✅ Found account: {account}")
+                    pass
             if not any('8540' in str(account) for account in source_data):
-                print(f"  ❌ Account 8540 NOT found in extracted source data!")
+                pass
             
             # Cache rolling accounts for performance improvement in edit dialogs
             if rolling_data:
@@ -5689,25 +5684,23 @@ class MultiProjectAccountMappingApp:
             proj_in_manager = self.project_manager.projects.get(current_project.name)
             if proj_in_manager:
                 is_same_object = (current_project is proj_in_manager)
-                print(f"  🔍 current_project is same object as manager's project: {is_same_object}")
+                pass
                 if not is_same_object:
-                    print(f"  ⚠️ WARNING: Objects are different!")
-                    print(f"  🔍 current_project id: {id(current_project)}")
-                    print(f"  🔍 manager project id: {id(proj_in_manager)}")
+                    pass
                     # If objects are different, we must update the one in the manager
                     # because that's what gets saved
-                    print(f"  🔄 Updating the project in manager instead of current_project")
+                    pass
                     self.project_manager.projects[current_project.name].mappings = mappings
                     # Also ensure current_project points to the right object
                     self.project_manager.select_project(current_project.name)
                     current_project = self.project_manager.get_current_project()
-                    print(f"  ✅ Realigned current_project to manager's object")
+                    pass
                 else:
                     # Objects are the same, update once
                     current_project.mappings = mappings
-                    print(f"  ✅ Updated mappings ({len(mappings)} total)")
+                    pass
             else:
-                print(f"  ⚠️ Project '{current_project.name}' not found in manager!")
+                pass
                 # This shouldn't happen but if it does, add it
                 self.project_manager.projects[current_project.name] = current_project
                 current_project.mappings = mappings
@@ -5726,7 +5719,7 @@ class MultiProjectAccountMappingApp:
             self.status_var.set(status_msg)
             
             # Save settings
-            print(f"  💾 Saving {len(current_project.mappings)} mappings for {current_project.name}")
+            pass
             self.project_manager.save_settings()
             
             # Verify save was successful
@@ -5735,9 +5728,9 @@ class MultiProjectAccountMappingApp:
                 saved_data = json.load(f)
             saved_count = len(saved_data['projects'][current_project.name]['mappings'])
             if saved_count != len(current_project.mappings):
-                print(f"  ⚠️ WARNING: Mismatch! Tried to save {len(current_project.mappings)} but file has {saved_count}")
+                pass
             else:
-                print(f"  ✅ Verified: {saved_count} mappings successfully saved to disk")
+                pass
             
             if not silent_mode:
                 messagebox.showinfo("Success", f"Generated {total_mappings} account mappings!\n\n"
@@ -5747,7 +5740,7 @@ class MultiProjectAccountMappingApp:
                                   f"Please review and edit mappings as needed.")
             else:
                 # Silent mode - used for auto-refresh on project load
-                print(f"  ✅ Auto-refreshed {total_mappings} mappings (including new accounts)")
+                pass
                               
         except Exception as e:
 
@@ -5894,18 +5887,18 @@ class MultiProjectAccountMappingApp:
         # Get source amounts for all accounts
         source_amounts = self.get_source_amounts_for_mappings()
         
-        # Debug: Check if 8540 has an amount
+        # Check amounts
         for account_key in source_amounts.keys():
             if '8540' in str(account_key):
-                print(f"  💰 Found amount for {account_key}: {source_amounts[account_key]}")
+                pass
         
         # Check mappings for 8540
         accounts_with_8540 = [k for k in mappings.keys() if '8540' in str(k)]
         if accounts_with_8540:
-            print(f"  📌 Accounts with 8540 in mappings: {accounts_with_8540}")
+            pass
             for acc in accounts_with_8540:
                 amount = source_amounts.get(acc, 'NO AMOUNT FOUND')
-                print(f"    - {acc}: Amount = {amount}")
+                pass
         
         # Add mappings to tree with spacing above category titles
         first_heading = True
@@ -6958,8 +6951,6 @@ class MultiProjectAccountMappingApp:
                 pass
             if hasattr(current_project, 'aggregated_data'):
                 pass
-
-                pass
         
         if has_monthly_data and current_project:
             self.mappings_modified_after_generation = True
@@ -6997,7 +6988,7 @@ class MultiProjectAccountMappingApp:
                 style="OrangeModified.TButton"
             )
             
-            # Debug logging
+            # Log mapping process
         else:
             # Configure normal style
             style.configure("Normal.TButton",

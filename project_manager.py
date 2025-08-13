@@ -246,14 +246,14 @@ class ProjectManager:
         # IMPORTANT: Use the object from the dictionary to ensure consistency
         if self.current_project is None:
             self.current_project = self.projects[project.name]
-            print(f"✅ Set '{project.name}' as current project (id: {id(self.current_project)})")
+            pass
     
     def select_project(self, project_name: str) -> bool:
         """Select a project as current"""
         if project_name in self.projects:
             # Always use the actual project object from the dictionary
             self.current_project = self.projects[project_name]
-            print(f"✅ Selected project '{project_name}' (id: {id(self.current_project)})")
+            pass
             return True
         return False
     
@@ -307,12 +307,12 @@ class ProjectManager:
                         })
                 
                 except Exception as e:
-                    print(f"Error reading sheet {sheet_name}: {e}")
+                    pass
                     # Skip problematic sheets
                     continue
         
         except Exception as e:
-            print(f"Error reading workbook {workbook_path}: {e}")
+            pass
             return []
         
         return projects_found
@@ -348,40 +348,36 @@ class ProjectManager:
         
         # FIRST: Always try to load from project_settings.json (unless forcing backup)
         if os.path.exists(self.settings_file) and not force_backup:
-            print(f"📂 Loading saved project data from {self.settings_file}")
+            pass
             try:
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     saved_settings = json.load(f)
                 saved_projects = saved_settings.get('projects', {})
-                print(f"📋 Found {len(saved_projects)} saved projects in settings file")
+                pass
                 for proj_name, proj_data in saved_projects.items():
                     mappings_count = len(proj_data.get('mappings', {}))
-                    print(f"   - {proj_name}: {mappings_count} mappings")
+                    pass
                     if proj_data.get('mappings'):  # Only include projects with mappings
                         saved_project_data[proj_name] = proj_data
-                        print(f"✅ Loaded mappings for {proj_name}: {mappings_count} mappings")
-                print(f"💾 Total projects loaded from settings: {len(saved_project_data)}")
             except Exception as e:
-                print(f"⚠️ Error loading saved project data: {e}")
+                pass
                 saved_project_data = {}
         # SECOND: Only use backup if explicitly requested or no settings file exists
         elif hasattr(self, '_backup_settings') and self._backup_settings:
-            print(f"🔄 Loading from backup (forced={force_backup} or no settings file)")
+            pass
             saved_settings = self._backup_settings
             saved_projects = saved_settings.get('projects', {})
-            print(f"📋 Found {len(saved_projects)} saved projects in backup")
+            pass
             for proj_name, proj_data in saved_projects.items():
                 mappings_count = len(proj_data.get('mappings', {}))
-                print(f"   - {proj_name}: {mappings_count} mappings")
+                pass
                 if proj_data.get('mappings'):  # Only include projects with mappings
                     saved_project_data[proj_name] = proj_data
-                    print(f"📁 Loaded backup mappings for {proj_name}: {mappings_count} mappings")
-            print(f"💾 Total projects loaded from backup: {len(saved_project_data)}")
             # Clear backup after use
             self._backup_settings = None
             self._force_backup_load = False  # Reset flag
         else:
-            print(f"ℹ️ No saved data available (settings file: {os.path.exists(self.settings_file)})")
+            pass
         
         # Check if we should update existing projects or create new ones
         existing_projects = list(self.projects.keys())
@@ -389,14 +385,12 @@ class ProjectManager:
         
         # Always try to preserve existing projects when possible
         # Even if projects don't match exactly, preserve rolling sheet and other data
-        print(f"Existing projects: {existing_projects}")
-        print(f"Scanned projects: {scanned_projects}")
         projects_match = existing_projects and set(existing_projects) == set(scanned_projects)
-        print(f"Projects match exactly: {projects_match}")
+        pass
         
         # If we have existing projects, always try to preserve them unless forced to recreate
         has_existing_projects = bool(existing_projects)
-        print(f"Has existing projects: {has_existing_projects}")
+        pass
         
         if projects_match:
             # Update existing projects with new source file path
@@ -414,25 +408,25 @@ class ProjectManager:
             return len(projects_data)
         elif has_existing_projects:
             # Projects don't match exactly, but we have existing data - preserve what we can
-            print("⚠️  Projects don't match exactly, but preserving existing data where possible")
+            pass
             
             # Store existing project data before clearing, but prefer saved data if available
             existing_project_data = {}
             for proj_name, proj in self.projects.items():
                 existing_project_data[proj_name] = proj.to_dict()
-                print(f"Backing up existing data for {proj_name}: rolling_sheet={proj.rolling_sheet}, mappings={len(proj.mappings)}")
+                pass
             
             # Merge with saved project data (saved data takes precedence)
             for proj_name, proj_data in saved_project_data.items():
                 existing_project_data[proj_name] = proj_data
-                print(f"🔄 Using saved mappings for {proj_name}: {len(proj_data.get('mappings', {}))} mappings")
+                pass
             
             # Clear existing projects and create new ones
             self.projects.clear()
             self.current_project = None
         else:
             # No existing projects - create fresh but can use saved project data
-            print("Creating fresh projects (no existing data to preserve)")
+            pass
             existing_project_data = saved_project_data
         
         # Create project objects
@@ -446,20 +440,19 @@ class ProjectManager:
                 # Update the source file path and sheet in case they changed
                 project.source_file_path = workbook_path
                 project.source_sheet = project_data['sheet_name']
-                print(f"✅ Restored existing project data for {project_name}: rolling_sheet={project.rolling_sheet}, mappings={len(project.mappings)}")
+                pass
             else:
                 # Check if we have backed up data for this project (from existing_project_data)
-                print(f"🔍 Checking for saved data for project: {project_name}")
-                print(f"   Available projects with saved data: {list(existing_project_data.keys())}")
+                pass
                 if project_name in existing_project_data:
                     # Restore from backed up data
                     project = Project.from_dict(existing_project_data[project_name])
                     # Update the source file path and sheet in case they changed
                     project.source_file_path = workbook_path
                     project.source_sheet = project_data['sheet_name']
-                    print(f"✅ Restored backed up project data for {project_name}: rolling_sheet={project.rolling_sheet}, mappings={len(project.mappings)}")
+                    pass
                 else:
-                    print(f"❌ No saved data found for {project_name}, creating new project")
+                    pass
                     # Create new project
                     project = Project(
                         name=project_name,
@@ -474,7 +467,7 @@ class ProjectManager:
                         project.source_range = stored_ranges.get('source_range', '')
                         project.rolling_range = stored_ranges.get('rolling_range', '')
                         project.sheet_ranges = stored_ranges.get('sheet_ranges', {})
-                        print(f"Restored persistent range memory for {project_name}: source={project.source_range}, rolling={project.rolling_range}")
+                        pass
                         
                         # Try to restore rolling sheet from sheet_ranges if available
                         if project.sheet_ranges:
@@ -482,7 +475,7 @@ class ProjectManager:
                             first_sheet_name = next(iter(project.sheet_ranges.keys()), None)
                             if first_sheet_name:
                                 project.rolling_sheet = first_sheet_name
-                                print(f"Restored rolling sheet from sheet_ranges: {first_sheet_name}")
+                                pass
             
             self.add_project(project)
         
@@ -501,7 +494,7 @@ class ProjectManager:
                 xl_file = pd.ExcelFile(workbook_path)
                 return xl_file.sheet_names
             except Exception as e2:
-                print(f"Error reading rolling workbook: {e2}")
+                pass
                 return []
     
     def set_rolling_workbook(self, workbook_path: str) -> None:
@@ -523,26 +516,15 @@ class ProjectManager:
             project.clear_runtime_data()
             project_dict = project.to_dict()
             settings_data['projects'][project_name] = project_dict
-            # Only show save info for Columbia Villas when debugging
-            # if project_name == "Columbia Villas":
-            #     print(f"  💾 Saving Columbia Villas with {len(project.mappings)} mappings")
+            pass
         
         try:
             with open(self.settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings_data, f, indent=2, ensure_ascii=False)
             
-            # Verification disabled - uncomment for debugging
-            # if "Columbia Villas" in settings_data['projects']:
-            #     with open(self.settings_file, 'r', encoding='utf-8') as f:
-            #         verify_data = json.load(f)
-            #     file_mappings = len(verify_data['projects']['Columbia Villas'].get('mappings', {}))
-            #     memory_mappings = len(settings_data['projects']['Columbia Villas'].get('mappings', {}))
-            #     if file_mappings != memory_mappings:
-            #         print(f"     ❌ ERROR: File has {file_mappings} but tried to write {memory_mappings}!")
-            #     else:
-            #         print(f"     ✅ Verified: {file_mappings} mappings successfully written to file")
+            pass
         except Exception as e:
-            print(f"Error saving settings: {e}")
+            pass
     
     def load_settings(self) -> None:
         """Load settings from JSON file"""
@@ -567,15 +549,15 @@ class ProjectManager:
             current_project_name = settings_data.get('current_project')
             if current_project_name and current_project_name in self.projects:
                 self.current_project = self.projects[current_project_name]
-                print(f"✅ Loaded current project '{current_project_name}' (id: {id(self.current_project)})")
+                pass
             elif self.projects:
                 # Default to first project if current not found
                 first_project_name = list(self.projects.keys())[0]
                 self.current_project = self.projects[first_project_name]
-                print(f"✅ Set default current project '{first_project_name}' (id: {id(self.current_project)})")
+                pass
         
         except Exception as e:
-            print(f"Error loading settings: {e}")
+            pass
     
     def load_range_memory(self) -> None:
         """Load persistent range memory from JSON file"""
@@ -586,7 +568,7 @@ class ProjectManager:
             with open(self.range_memory_file, 'r', encoding='utf-8') as f:
                 self.persistent_range_memory = json.load(f)
         except Exception as e:
-            print(f"Error loading range memory: {e}")
+            pass
             self.persistent_range_memory = {}
     
     def save_range_memory(self) -> None:
@@ -595,7 +577,7 @@ class ProjectManager:
             with open(self.range_memory_file, 'w', encoding='utf-8') as f:
                 json.dump(self.persistent_range_memory, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            print(f"Error saving range memory: {e}")
+            pass
     
     def store_project_ranges(self, project_name: str, source_range: str, rolling_range: str, sheet_ranges: dict = None) -> None:
         """Store range memory for a project"""
@@ -605,7 +587,7 @@ class ProjectManager:
             'sheet_ranges': sheet_ranges or {}
         }
         self.save_range_memory()
-        print(f"Stored range memory for {project_name}: source={source_range}, rolling={rolling_range}")
+        pass
     
     def get_project_ranges(self, project_name: str) -> dict:
         """Get stored range memory for a project"""
@@ -623,9 +605,9 @@ class ProjectManager:
             try:
                 with open(self.settings_file, 'r', encoding='utf-8') as f:
                     backup_settings = json.load(f)
-                print(f"💾 Backed up project settings with {len(backup_settings.get('projects', {}))} projects")
+                pass
             except Exception as e:
-                print(f"Error backing up settings: {e}")
+                pass
         
         self.projects.clear()
         self.current_project = None

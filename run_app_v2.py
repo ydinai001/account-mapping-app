@@ -11,24 +11,24 @@ import tkinter as tk
 from tkinter import messagebox
 import subprocess
 import platform
+import warnings
+
+# Suppress openpyxl header/footer parsing warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')
 
 def activate_macos_app():
     """Force macOS to activate the tkinter app for proper mouse functionality"""
     if platform.system() == "Darwin":  # macOS only
         try:
-            print("Attempting to activate macOS app...")
             script = '''
             tell application "System Events"
                 set frontmost of first process whose frontmost is true to false
                 set frontmost of first process whose name contains "Python" to true
             end tell
             '''
-            result = subprocess.run(['osascript', '-e', script], check=False, capture_output=True)
-            print(f"Activation result: {result.returncode}")
-            if result.stderr:
-                print(f"Activation error: {result.stderr.decode()}")
-        except Exception as e:
-            print(f"Activation failed: {e}")
+            subprocess.run(['osascript', '-e', script], check=False, capture_output=True)
+        except Exception:
+            pass
 
 def check_dependencies():
     """Check if all required dependencies are available"""
@@ -41,14 +41,12 @@ def check_dependencies():
 
 def main():
     """Main launcher function"""
-    print("Starting Multi-Project Account Mapping Application v2...")
     
     try:
         # Check dependencies first
         deps_ok, deps_msg = check_dependencies()
         if not deps_ok:
             error_msg = f"Dependency Error: {deps_msg}\n\nPlease install required packages:\npip install pandas openpyxl"
-            print(error_msg)
             
             try:
                 root = tk.Tk()
@@ -60,12 +58,9 @@ def main():
             
             return 1
         
-        print("Dependencies check passed.")
-        
         # Import and create the application
         from main_v2 import MultiProjectAccountMappingApp
         
-        print("Creating application window...")
         root = tk.Tk()
         
         # Set application icon if available
@@ -76,8 +71,7 @@ def main():
             pass
         
         # Create and run the application
-        app = MultiProjectAccountMappingApp(root)
-        print("Application started successfully!")
+        _ = MultiProjectAccountMappingApp(root)
         
         # Python 3.13 works without additional mouse fixes
         
