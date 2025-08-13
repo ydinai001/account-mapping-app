@@ -384,46 +384,57 @@ class MultiProjectAccountMappingApp:
         self.bind_mouse_wheel()
     
     def bind_mouse_wheel(self):
-        """Bind mouse wheel events for scrolling"""
-        # Bind to canvas only, not globally
-        # Different bindings for different platforms
+        """Bind mouse wheel events globally for better coverage"""
+        # Bind to root window for global coverage
+        # This ensures scrolling works even in gaps between widgets
         if self.root.tk.call('tk', 'windowingsystem') == 'aqua':  # macOS
-            self.main_canvas.bind("<MouseWheel>", self.on_mouse_wheel)
-            self.main_canvas.bind("<Shift-MouseWheel>", self.on_shift_mouse_wheel)
+            self.root.bind("<MouseWheel>", self.on_mouse_wheel)
+            self.root.bind("<Shift-MouseWheel>", self.on_shift_mouse_wheel)
         else:  # Windows and Linux
-            self.main_canvas.bind("<MouseWheel>", self.on_mouse_wheel)
-            self.main_canvas.bind("<Button-4>", self.on_mouse_wheel_up)
-            self.main_canvas.bind("<Button-5>", self.on_mouse_wheel_down)
-        
-        # Also bind to scrollable frame
-        if self.root.tk.call('tk', 'windowingsystem') == 'aqua':  # macOS
-            self.scrollable_frame.bind("<MouseWheel>", self.on_mouse_wheel)
-        else:  # Windows and Linux
-            self.scrollable_frame.bind("<MouseWheel>", self.on_mouse_wheel)
-            self.scrollable_frame.bind("<Button-4>", self.on_mouse_wheel_up)
-            self.scrollable_frame.bind("<Button-5>", self.on_mouse_wheel_down)
+            self.root.bind("<MouseWheel>", self.on_mouse_wheel)
+            self.root.bind("<Button-4>", self.on_mouse_wheel_up)
+            self.root.bind("<Button-5>", self.on_mouse_wheel_down)
     
     def on_mouse_wheel(self, event):
-        """Handle mouse wheel scrolling"""
-        # Check if we're over a widget that should handle its own scrolling
-        widget = self.root.winfo_containing(event.x_root, event.y_root)
+        """Handle mouse wheel scrolling with improved detection"""
+        # Get the widget under the mouse using pointer position
+        try:
+            x, y = self.root.winfo_pointerxy()
+            widget = self.root.winfo_containing(x, y)
+        except:
+            # Fallback to event coordinates if pointer position fails
+            widget = self.root.winfo_containing(event.x_root, event.y_root)
         
-        # Check if the widget under mouse is a Treeview or Text widget (they handle their own scrolling)
+        # Check if widget is a scrollable type that should handle its own scrolling
         if widget:
-            widget_class = widget.winfo_class()
-            # Check widget and its parents for scrollable widgets
+            # Walk up the widget hierarchy to check for scrollable widgets
             check_widget = widget
             while check_widget:
+                # Check if it's a TreeView, Text, or Listbox
                 if isinstance(check_widget, (ttk.Treeview, tk.Text, tk.Listbox)):
-                    # Let the widget handle its own scrolling
+                    # These widgets handle their own scrolling
                     return
+                
+                # Also check by class name for additional robustness
+                try:
+                    widget_class = check_widget.winfo_class()
+                    if widget_class in ['Treeview', 'Text', 'Listbox', 'TListbox']:
+                        return
+                except:
+                    pass
+                
+                # Move up to parent widget
                 try:
                     check_widget = check_widget.master
+                    # Stop if we reach the root window
+                    if check_widget == self.root:
+                        break
                 except:
                     break
         
-        # Only scroll main canvas if we're not over a scrollable widget
-        if self.main_canvas.winfo_exists():
+        # If we reach here, scroll the main canvas
+        # This now works from anywhere that isn't a scrollable widget
+        if self.main_canvas and self.main_canvas.winfo_exists():
             if self.root.tk.call('tk', 'windowingsystem') == 'aqua':  # macOS
                 self.main_canvas.yview_scroll(int(-1 * event.delta), "units")
             else:  # Windows
@@ -435,37 +446,71 @@ class MultiProjectAccountMappingApp:
         pass
     
     def on_mouse_wheel_up(self, event):
-        """Handle mouse wheel up for Linux"""
+        """Handle mouse wheel up for Linux with improved detection"""
+        # Get the widget under the mouse using pointer position
+        try:
+            x, y = self.root.winfo_pointerxy()
+            widget = self.root.winfo_containing(x, y)
+        except:
+            widget = self.root.winfo_containing(event.x_root, event.y_root)
+        
         # Check if we're over a scrollable widget
-        widget = self.root.winfo_containing(event.x_root, event.y_root)
         if widget:
             check_widget = widget
             while check_widget:
                 if isinstance(check_widget, (ttk.Treeview, tk.Text, tk.Listbox)):
                     return
+                
+                try:
+                    widget_class = check_widget.winfo_class()
+                    if widget_class in ['Treeview', 'Text', 'Listbox', 'TListbox']:
+                        return
+                except:
+                    pass
+                
                 try:
                     check_widget = check_widget.master
+                    if check_widget == self.root:
+                        break
                 except:
                     break
         
-        if self.main_canvas.winfo_exists():
+        # Scroll the main canvas
+        if self.main_canvas and self.main_canvas.winfo_exists():
             self.main_canvas.yview_scroll(-1, "units")
     
     def on_mouse_wheel_down(self, event):
-        """Handle mouse wheel down for Linux"""
+        """Handle mouse wheel down for Linux with improved detection"""
+        # Get the widget under the mouse using pointer position
+        try:
+            x, y = self.root.winfo_pointerxy()
+            widget = self.root.winfo_containing(x, y)
+        except:
+            widget = self.root.winfo_containing(event.x_root, event.y_root)
+        
         # Check if we're over a scrollable widget
-        widget = self.root.winfo_containing(event.x_root, event.y_root)
         if widget:
             check_widget = widget
             while check_widget:
                 if isinstance(check_widget, (ttk.Treeview, tk.Text, tk.Listbox)):
                     return
+                
+                try:
+                    widget_class = check_widget.winfo_class()
+                    if widget_class in ['Treeview', 'Text', 'Listbox', 'TListbox']:
+                        return
+                except:
+                    pass
+                
                 try:
                     check_widget = check_widget.master
+                    if check_widget == self.root:
+                        break
                 except:
                     break
         
-        if self.main_canvas.winfo_exists():
+        # Scroll the main canvas
+        if self.main_canvas and self.main_canvas.winfo_exists():
             self.main_canvas.yview_scroll(1, "units")
     
     def update_scroll_region(self):
