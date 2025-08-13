@@ -1796,9 +1796,28 @@ class MultiProjectAccountMappingApp:
             return
         
         try:
-            # Read Excel file with specific sheet (using cache)
+            # For rolling preview, use pandas directly which is faster than openpyxl with data_only=True
             import pandas as pd
-            df = self._load_excel_with_cache(file_path, sheet_name)
+            
+            # Special handling for rolling preview to avoid slow formula evaluation
+            if file_type == "rolling":
+                # Use a preview-specific cache key
+                cache_key = f"{file_path}:{sheet_name}:preview"
+                
+                if cache_key not in self.dataframe_cache:
+                    # Load without formula evaluation for speed
+                    df = pd.read_excel(
+                        file_path,
+                        sheet_name=sheet_name,
+                        header=None,
+                        engine='openpyxl'
+                    )
+                    self.dataframe_cache[cache_key] = df
+                else:
+                    df = self.dataframe_cache[cache_key]
+            else:
+                # For source, use regular loading (it's already fast)
+                df = self._load_excel_with_cache(file_path, sheet_name)
             
             # Parse range and extract data (always exclude amounts for preview)
             data = self.extract_range_data(df, range_str, include_amounts=False)
@@ -1807,13 +1826,14 @@ class MultiProjectAccountMappingApp:
                 messagebox.showwarning("Warning", "No data found in the specified range.")
                 return
             
-            # Get target month for the title
-            target_month = self.ensure_consistent_target_month(current_project)
-            if target_month:
-                clean_target_month = self.clean_target_month_text(target_month)
+            # Get target month for the title (only if already cached, don't force detection)
+            # This optimization prevents expensive spreadsheet scanning during preview
+            target_month_text = ""
+            if hasattr(current_project, 'target_month') and current_project.target_month:
+                # Use cached month if available
+                clean_target_month = self.clean_target_month_text(current_project.target_month)
                 target_month_text = f" - {clean_target_month}"
-            else:
-                target_month_text = ""
+            # Don't call ensure_consistent_target_month() here as it's too expensive for preview
             
             # Show preview dialog
             self.show_range_preview(data, f"{file_type.title()} Range Preview - {current_project.name}{target_month_text}", range_str)
