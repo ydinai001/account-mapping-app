@@ -1,4 +1,4 @@
-# Account Mapping Tool v2 - Multi-Project Edition
+# Account Mapping Tool v2.5 - Multi-Project Edition
 
 A professional Python Tkinter desktop application for mapping account descriptions between multiple P&L projects in Excel workbooks with intelligent pattern recognition, manual editing capabilities, and automated monthly statement generation.
 
@@ -315,6 +315,10 @@ The application uses a sophisticated multi-tier data management system:
 │  • range_memory.json (range persistence)            │
 │  • range_settings.json (default ranges)             │
 │  • Excel files (source data)                        │
+│                                                      │
+│  Storage Location:                                   │
+│  • Development: ./account-mapping-app/              │
+│  • Standalone: ~/Documents/AccountMappingTool/      │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -609,7 +613,15 @@ For troubleshooting, uncomment debug lines in:
 
 ## Version History
 
-### v2.4 (August 2025) - Current
+### v2.5 (August 2025) - Current
+- **Feature**: Browse for backup functionality - load backups from any location
+- **Enhancement**: Automatic writable directory detection for standalone app
+- **Fix**: Resolved read-only file system error when loading backups
+- **Feature**: App data now stored in ~/Documents/AccountMappingTool/ for standalone version
+- **Enhancement**: Backup restoration works from USB drives, network locations, or any folder
+- **Improvement**: Better error handling and validation for backup files
+
+### v2.4 (August 2025)
 - **Enhancement**: Universal window centering system for all pop-out windows
 - **Fix**: Pop-out windows now open on same screen as main application
 - **Enhancement**: Consistent window sizing (1400x850) for Step 2 and Step 3
@@ -691,5 +703,5 @@ Proprietary - All rights reserved
 ---
 
 **Last Updated**: August 13, 2025  
-**Version**: 2.4  
+**Version**: 2.5  
 **Maintainer**: Account Mapping Development Team

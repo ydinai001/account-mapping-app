@@ -21,11 +21,30 @@ import platform
 import re
 import json
 import time
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from collections import OrderedDict
 
 # Import our project management classes
 from project_manager import ProjectManager, Project
+
+# Get app data directory based on environment
+def get_app_data_dir():
+    """Get the appropriate directory for storing app data files"""
+    # Check if we're running from a frozen app (PyInstaller bundle)
+    if getattr(sys, 'frozen', False):
+        # Running from a bundled app - use user's Documents folder
+        docs_dir = Path.home() / "Documents" / "AccountMappingTool"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        return str(docs_dir)
+    else:
+        # Running from source - use current directory
+        return os.path.dirname(os.path.abspath(__file__))
+
+def get_settings_path(filename):
+    """Get the full path for a settings file"""
+    return os.path.join(get_app_data_dir(), filename)
 
 # Performance profiling decorator
 def profile_performance(method_name):
@@ -44,7 +63,7 @@ def profile_performance(method_name):
 class MultiProjectAccountMappingApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Account Mapping Tool v2 - Multi-Project")
+        self.root.title("Account Mapping Tool v2.5 - Multi-Project")
         
         # Set window size (reduced by 50% for better screen compatibility)
         self.root.minsize(993, 662)  # 50% smaller for better usability on smaller screens
@@ -53,7 +72,7 @@ class MultiProjectAccountMappingApp:
         self.center_window(993, 662)
         
         # Project management
-        self.project_manager = ProjectManager()
+        self.project_manager = ProjectManager(settings_file=get_settings_path("project_settings.json"))
         
         # UI Variables
         self.project_var = tk.StringVar()
@@ -1125,10 +1144,10 @@ class MultiProjectAccountMappingApp:
         """Update the project title display"""
         if project_name and project_name != "No Project Selected":
             self.project_title_label.config(text=f"Project: {project_name}")
-            self.root.title(f"Account Mapping Tool v2 - {project_name}")
+            self.root.title(f"Account Mapping Tool v2.5 - {project_name}")
         else:
             self.project_title_label.config(text="No Project Selected")
-            self.root.title("Account Mapping Tool v2 - Multi-Project")
+            self.root.title("Account Mapping Tool v2.5 - Multi-Project")
     
     @profile_performance("load_project_data")
     def load_project_data(self):
@@ -5172,7 +5191,7 @@ class MultiProjectAccountMappingApp:
     def load_range_settings(self):
         """Load saved range settings"""
         try:
-            settings_file = "range_settings.json"
+            settings_file = get_settings_path("range_settings.json")
             if os.path.exists(settings_file):
 
                 pass
@@ -5192,7 +5211,7 @@ class MultiProjectAccountMappingApp:
     def get_default_source_range(self):
         """Get default source range from global settings or fallback"""
         try:
-            settings_file = "range_settings.json"
+            settings_file = get_settings_path("range_settings.json")
             if os.path.exists(settings_file):
 
                 pass
@@ -5211,7 +5230,7 @@ class MultiProjectAccountMappingApp:
     def get_default_rolling_range(self):
         """Get default rolling range from global settings or fallback"""
         try:
-            settings_file = "range_settings.json"
+            settings_file = get_settings_path("range_settings.json")
             if os.path.exists(settings_file):
 
                 pass
@@ -5535,7 +5554,7 @@ class MultiProjectAccountMappingApp:
                 'rolling_range': self.rolling_range_var.get()
                 # Note: rolling_sheet not saved (removed per user request)
             }
-            with open("range_settings.json", 'w') as f:
+            with open(get_settings_path("range_settings.json"), 'w') as f:
                 json.dump(settings, f, indent=2)
         except Exception as e:
             pass  # Debug output removed
@@ -7174,7 +7193,7 @@ class MultiProjectAccountMappingApp:
             from datetime import datetime
             
             # Create backup directory if it doesn't exist
-            backup_dir = os.path.join(os.path.dirname(__file__), "backups")
+            backup_dir = os.path.join(get_app_data_dir(), "backups")
             os.makedirs(backup_dir, exist_ok=True)
             
             # Generate backup filename with timestamp and target month
@@ -7207,7 +7226,7 @@ class MultiProjectAccountMappingApp:
             }
             
             # Backup global settings (range_settings.json)
-            range_settings_path = "range_settings.json"
+            range_settings_path = get_settings_path("range_settings.json")
             if os.path.exists(range_settings_path):
                 backup_data["global_settings"]["range_settings"] = json.load(open(range_settings_path, 'r'))
                 # Copy the file
@@ -7301,23 +7320,27 @@ class MultiProjectAccountMappingApp:
             import os
             from datetime import datetime
             
-            backup_dir = os.path.join(os.path.dirname(__file__), "backups")
+            backup_dir = os.path.join(get_app_data_dir(), "backups")
             
-            if not os.path.exists(backup_dir):
-                messagebox.showinfo("No Backups", "No backup files found. Create a backup first.")
-                return
-            
-            # Find all backup folders
+            # Find all backup folders in default location
             backup_folders = []
-            for item in os.listdir(backup_dir):
-                item_path = os.path.join(backup_dir, item)
-                if os.path.isdir(item_path) and item.startswith("account_mapping_backup"):
-                    metadata_path = os.path.join(item_path, "backup_metadata.json")
-                    if os.path.exists(metadata_path):
-                        backup_folders.append((item, item_path, metadata_path))
+            if os.path.exists(backup_dir):
+                for item in os.listdir(backup_dir):
+                    item_path = os.path.join(backup_dir, item)
+                    if os.path.isdir(item_path) and item.startswith("account_mapping_backup"):
+                        metadata_path = os.path.join(item_path, "backup_metadata.json")
+                        if os.path.exists(metadata_path):
+                            backup_folders.append((item, item_path, metadata_path))
             
+            # If no backups found, offer to browse for backup
             if not backup_folders:
-                messagebox.showinfo("No Backups", "No valid backup files found.")
+                result = messagebox.askyesno(
+                    "No Local Backups", 
+                    "No backup files found in the default location.\n\n"
+                    "Would you like to browse for a backup folder?"
+                )
+                if result:
+                    self.browse_for_backup()
                 return
             
             # Create backup selection window
@@ -7449,24 +7472,141 @@ class MultiProjectAccountMappingApp:
             def close_window():
                 backup_window.destroy()
             
+            def browse_for_backup_from_window():
+                """Browse for backup folder from the backup selection window"""
+                backup_window.destroy()
+                self.browse_for_backup()
+            
             # Buttons - centered
             load_button = ttk.Button(button_frame, text="Load Selected", command=load_selected_backup)
+            browse_button = ttk.Button(button_frame, text="Browse...", command=browse_for_backup_from_window)
             cancel_button = ttk.Button(button_frame, text="Cancel", command=close_window)
             
             # Center buttons using grid for better control
             button_frame.columnconfigure(0, weight=1)
             button_frame.columnconfigure(1, weight=0)
             button_frame.columnconfigure(2, weight=0)
-            button_frame.columnconfigure(3, weight=1)
+            button_frame.columnconfigure(3, weight=0)
+            button_frame.columnconfigure(4, weight=1)
             
             load_button.grid(row=0, column=1, padx=(0, 10))
-            cancel_button.grid(row=0, column=2)
+            browse_button.grid(row=0, column=2, padx=(0, 10))
+            cancel_button.grid(row=0, column=3)
             
             # Double-click to load
             tree.bind("<Double-1>", lambda e: load_selected_backup())
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to show backup menu:\n{str(e)}")
+    
+    def browse_for_backup(self):
+        """Browse for a backup folder to restore from"""
+        try:
+            import os
+            import json
+            from datetime import datetime
+            
+            # Open folder browser dialog
+            backup_folder = filedialog.askdirectory(
+                title="Select Backup Folder",
+                initialdir=os.path.expanduser("~")
+            )
+            
+            if not backup_folder:
+                return
+            
+            # Validate backup folder
+            metadata_path = os.path.join(backup_folder, "backup_metadata.json")
+            
+            if not os.path.exists(metadata_path):
+                # Check if this might be a parent folder containing backup folders
+                found_backup = False
+                for item in os.listdir(backup_folder):
+                    item_path = os.path.join(backup_folder, item)
+                    if os.path.isdir(item_path) and item.startswith("account_mapping_backup"):
+                        test_metadata = os.path.join(item_path, "backup_metadata.json")
+                        if os.path.exists(test_metadata):
+                            # Found a backup folder inside
+                            result = messagebox.askyesno(
+                                "Backup Folder Found",
+                                f"Found backup folder: {item}\n\n"
+                                f"Would you like to load this backup?"
+                            )
+                            if result:
+                                backup_folder = item_path
+                                metadata_path = test_metadata
+                                found_backup = True
+                                break
+                
+                if not found_backup:
+                    messagebox.showerror(
+                        "Invalid Backup", 
+                        "The selected folder is not a valid backup folder.\n\n"
+                        "A valid backup folder should contain:\n"
+                        "• backup_metadata.json file\n"
+                        "• files/ subdirectory with Excel files\n\n"
+                        "Please select a folder created by the 'Create Backup' function."
+                    )
+                    return
+            
+            # Load and validate metadata
+            try:
+                with open(metadata_path, 'r', encoding='utf-8') as f:
+                    metadata = json.load(f)
+            except Exception as e:
+                messagebox.showerror(
+                    "Invalid Backup",
+                    f"Failed to read backup metadata:\n{str(e)}"
+                )
+                return
+            
+            # Validate backup structure
+            if "projects" not in metadata:
+                messagebox.showerror(
+                    "Invalid Backup",
+                    "The backup metadata is missing project information."
+                )
+                return
+            
+            # Get backup information
+            backup_date = metadata.get("backup_date", "Unknown")
+            project_count = len(metadata.get("projects", {}))
+            backup_timestamp = metadata.get("backup_timestamp", "")
+            
+            # Format display information
+            if backup_timestamp:
+                try:
+                    dt = datetime.strptime(backup_timestamp, "%Y%m%d_%H%M%S")
+                    formatted_date = dt.strftime("%Y-%m-%d %H:%M:%S")
+                except:
+                    formatted_date = backup_date
+            else:
+                formatted_date = backup_date
+            
+            # Get target month information
+            target_month = "N/A"
+            for project_data in metadata.get("projects", {}).values():
+                if project_data.get("target_month"):
+                    target_month = project_data["target_month"]
+                    break
+            
+            # Confirm with user
+            result = messagebox.askyesno(
+                "Confirm Load Backup",
+                f"Found backup with the following information:\n\n"
+                f"Backup Date: {formatted_date}\n"
+                f"Target Month: {target_month}\n"
+                f"Projects: {project_count}\n"
+                f"Location: {backup_folder}\n\n"
+                f"This will replace all current data.\n"
+                f"Are you sure you want to continue?"
+            )
+            
+            if result:
+                self.load_backup(backup_folder, metadata)
+                
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to browse for backup:\n{str(e)}")
     
     def load_backup(self, backup_path, metadata):
         """Load backup data and restore all projects"""
@@ -7488,12 +7628,12 @@ class MultiProjectAccountMappingApp:
                 if "range_settings" in metadata["global_settings"]:
 
                     pass
-                    with open("range_settings.json", 'w', encoding='utf-8') as f:
+                    with open(get_settings_path("range_settings.json"), 'w', encoding='utf-8') as f:
                         json.dump(metadata["global_settings"]["range_settings"], f, indent=2)
             
             # Restore uploaded files
             files_backup_dir = os.path.join(backup_path, "files")
-            app_dir = os.path.dirname(__file__)
+            app_dir = get_app_data_dir()
             
             # Create a restored_files directory
             restored_files_dir = os.path.join(app_dir, "restored_files")

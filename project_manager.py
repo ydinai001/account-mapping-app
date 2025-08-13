@@ -7,9 +7,28 @@ Handles multiple projects, settings persistence, and project data isolation.
 
 import json
 import os
+import sys
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 from collections import OrderedDict
 import pandas as pd
+
+# Get app data directory based on environment
+def get_app_data_dir():
+    """Get the appropriate directory for storing app data files"""
+    # Check if we're running from a frozen app (PyInstaller bundle)
+    if getattr(sys, 'frozen', False):
+        # Running from a bundled app - use user's Documents folder
+        docs_dir = Path.home() / "Documents" / "AccountMappingTool"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+        return str(docs_dir)
+    else:
+        # Running from source - use current directory
+        return os.path.dirname(os.path.abspath(__file__))
+
+def get_settings_path(filename):
+    """Get the full path for a settings file"""
+    return os.path.join(get_app_data_dir(), filename)
 
 
 class Project:
@@ -231,7 +250,7 @@ class ProjectManager:
         self.rolling_workbook_path = ""
         
         # Persistent range memory that survives "start fresh"
-        self.range_memory_file = "range_memory.json"
+        self.range_memory_file = get_settings_path("range_memory.json")
         self.persistent_range_memory = {}  # Format: {project_name: {source_range, rolling_range, sheet_ranges}}
         
         # Load existing settings
