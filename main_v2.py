@@ -1866,10 +1866,9 @@ class MultiProjectAccountMappingApp:
                                     if pd.notna(cell_value):
                                         cell_str = str(cell_value).strip()
                                         if cell_str and cell_str != 'nan' and not is_numeric_value(cell_value):
-                                            # Filter out total accounts (not applicable for mapping)
-                                            if not self.is_total_account(cell_str):
-                                                # Only include non-numeric text (account descriptions)
-                                                data.append(cell_str)
+                                            # Include all non-numeric text (account descriptions and subtotals)
+                                            # Subtotals will be displayed as headings in the mapping tree
+                                            data.append(cell_str)
                                 except Exception as e:
                                     pass  # Debug output removed
                 unique_data = list(dict.fromkeys(data))
@@ -1888,10 +1887,9 @@ class MultiProjectAccountMappingApp:
                             if pd.notna(cell_value):
                                 cell_str = str(cell_value).strip()
                                 if cell_str and cell_str != 'nan' and not is_numeric_value(cell_value):
-                                    # Filter out total accounts (not applicable for mapping)
-                                    if not self.is_total_account(cell_str):
-                                        # Only include non-numeric text (account descriptions)
-                                        data.append(cell_str)
+                                    # Include all non-numeric text (account descriptions and subtotals)
+                                    # Subtotals will be displayed as headings in the mapping tree
+                                    data.append(cell_str)
                         
                         # Remove duplicates while preserving order
                         unique_data = list(dict.fromkeys(data))
@@ -3033,19 +3031,15 @@ class MultiProjectAccountMappingApp:
                     if target_col_index_0based >= 0 and target_col_index_0based < len(source_df.columns):
                         amount_value = source_df.iloc[found_row, target_col_index_0based]
                         
-                        # Only include if account description contains account numbers
-                        if self.has_account_number(account_desc) and not self.is_total_or_heading(account_desc):
-
-                            pass
-                            if pd.notna(amount_value) and str(amount_value).strip():
-                                try:
-                                    # Convert to float, handling various formats
-                                    amount = float(str(amount_value).replace(',', '').replace('$', '').replace('(', '-').replace(')', '').strip())
-                                    monthly_amounts[account_desc] = amount
-                                except ValueError:
-                                    pass  # Debug output removed
-                            else:
-                                pass
+                        # Include amounts for all accounts, including subtotals
+                        # Subtotals will be displayed but not used in aggregation
+                        if pd.notna(amount_value) and str(amount_value).strip():
+                            try:
+                                # Convert to float, handling various formats
+                                amount = float(str(amount_value).replace(',', '').replace('$', '').replace('(', '-').replace(')', '').strip())
+                                monthly_amounts[account_desc] = amount
+                            except ValueError:
+                                pass  # Debug output removed
                         else:
                             pass
                 else:
