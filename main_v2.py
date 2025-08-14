@@ -63,7 +63,7 @@ def profile_performance(method_name):
 class MultiProjectAccountMappingApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Account Mapping Tool v2.5 - Multi-Project")
+        self.root.title("Account Mapping Tool v2.6 - Multi-Project")
         
         # Set window size (reduced by 50% for better screen compatibility)
         self.root.minsize(993, 662)  # 50% smaller for better usability on smaller screens
@@ -1144,10 +1144,10 @@ class MultiProjectAccountMappingApp:
         """Update the project title display"""
         if project_name and project_name != "No Project Selected":
             self.project_title_label.config(text=f"Project: {project_name}")
-            self.root.title(f"Account Mapping Tool v2.5 - {project_name}")
+            self.root.title(f"Account Mapping Tool v2.6 - {project_name}")
         else:
             self.project_title_label.config(text="No Project Selected")
-            self.root.title("Account Mapping Tool v2.5 - Multi-Project")
+            self.root.title("Account Mapping Tool v2.6 - Multi-Project")
     
     @profile_performance("load_project_data")
     def load_project_data(self):
@@ -5141,7 +5141,7 @@ class MultiProjectAccountMappingApp:
             try:
                 # Create mapping data structure
                 mapping_data = {
-                    "version": "2.0",
+                    "version": "2.6",
                     "created_date": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "project_name": current_project.name,
                     "source_file": os.path.basename(self.project_manager.source_workbook_path) if self.project_manager.source_workbook_path else "",
@@ -7219,7 +7219,7 @@ class MultiProjectAccountMappingApp:
             backup_data = {
                 "backup_timestamp": timestamp,
                 "backup_date": datetime.now().isoformat(),
-                "app_version": "2.0",
+                "app_version": "2.6",
                 "projects": {},
                 "global_settings": {},
                 "uploaded_files": {}
@@ -7677,8 +7677,8 @@ class MultiProjectAccountMappingApp:
                         if os.path.exists(rolling_file_backup):
                             # Restore rolling workbook to new location
                             restored_rolling = os.path.join(restored_files_dir, "rolling_workbook.xlsx")
-                            if not os.path.exists(restored_rolling):  # Only copy once
-                                shutil.copy2(rolling_file_backup, restored_rolling)
+                            # Always overwrite to ensure we get the file from this backup
+                            shutil.copy2(rolling_file_backup, restored_rolling)
                             self.project_manager.rolling_workbook_path = restored_rolling
                 
                 # Add project to manager

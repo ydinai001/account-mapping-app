@@ -1,4 +1,4 @@
-# Account Mapping Tool v2.5 - Multi-Project Edition
+# Account Mapping Tool v2.6 - Multi-Project Edition
 
 A professional Python Tkinter desktop application for mapping account descriptions between multiple P&L projects in Excel workbooks with intelligent pattern recognition, manual editing capabilities, and automated monthly statement generation.
 
@@ -548,12 +548,29 @@ python run_app_v2.py
 - **Double-click**: Edit mapping
 - **Right-click**: Context menu
 
+### Backup and Restore
+
+#### Creating Backups
+- **Manual Backup**: Click "Create Backup" button at any time
+- **What's Included**: All project settings, mappings, Excel files (including ALL tabs)
+- **Location**: 
+  - Development: `account-mapping-app/backups/`
+  - Standalone App: `~/Documents/AccountMappingTool/backups/`
+- **Naming**: Backups include timestamp and target month (e.g., `account_mapping_backup_Jul_2025_Actual_20250814_090256`)
+
+#### Restoring from Backup
+- **Load Backup**: Click "Load Backup" to see available backups
+- **Browse Option**: If no backups found locally, browse to any backup location
+- **Complete Restoration**: Restores all project data, mappings, and Excel files with ALL tabs preserved
+- **Important**: v2.6+ ensures the correct files from the selected backup are restored (fixes previous issue)
+
 ### Tips for Best Results
 1. **Consistent Naming**: Use consistent account names across projects
 2. **Range Selection**: Include all accounts in your range specifications
 3. **Manual Review**: Always review automatic mappings before generating statements
 4. **Regular Backups**: The app creates automatic backups, but keep your own too
 5. **Save Mappings**: Export mappings for reuse in future periods
+6. **Preserve All Tabs**: Backups maintain all Excel worksheet tabs, not just project tabs
 
 ## Technical Details
 
@@ -613,7 +630,14 @@ For troubleshooting, uncomment debug lines in:
 
 ## Version History
 
-### v2.5 (August 2025) - Current
+### v2.6 (August 2025) - Current
+- **Critical Fix**: Backup restore now correctly overwrites old restored files
+- **Bug Fix**: Resolved issue where loading a backup would use outdated restored files instead of files from the current backup
+- **Enhancement**: Ensures complete rolling workbook with all tabs is restored from backups
+- **Fix**: Removed file existence check that prevented proper backup restoration
+- **Result**: All Excel tabs are now properly preserved and restored from backups
+
+### v2.5 (August 2025)
 - **Feature**: Browse for backup functionality - load backups from any location
 - **Enhancement**: Automatic writable directory detection for standalone app
 - **Fix**: Resolved read-only file system error when loading backups
